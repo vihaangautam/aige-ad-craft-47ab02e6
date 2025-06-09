@@ -3,48 +3,70 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. */
+/* AIGE Design System - Yellow, Black, White theme */
 
 @layer base {
   :root {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 0 0% 100%; /* White */
+    --foreground: 0 0% 0%; /* Black */
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 0 0% 100%; /* White */
+    --card-foreground: 0 0% 0%; /* Black */
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 0 0% 100%; /* White */
+    --popover-foreground: 0 0% 0%; /* Black */
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 48 96% 53%; /* Yellow #FACC15 */
+    --primary-foreground: 0 0% 0%; /* Black */
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 0 0% 96%; /* Light gray */
+    --secondary-foreground: 0 0% 0%; /* Black */
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 0 0% 96%; /* Light gray */
+    --muted-foreground: 0 0% 45%; /* Gray */
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 48 96% 53%; /* Yellow */
+    --accent-foreground: 0 0% 0%; /* Black */
 
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 90%; /* Light gray border */
+    --input: 0 0% 90%; /* Light gray */
+    --ring: 48 96% 53%; /* Yellow */
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 0 0% 0%; /* Black */
+    --sidebar-foreground: 0 0% 100%; /* White */
+    --sidebar-primary: 48 96% 53%; /* Yellow */
+    --sidebar-primary-foreground: 0 0% 0%; /* Black */
+    --sidebar-accent: 0 0% 10%; /* Dark gray */
+    --sidebar-accent-foreground: 0 0% 100%; /* White */
+    --sidebar-border: 0 0% 20%; /* Dark gray */
+    --sidebar-ring: 48 96% 53%; /* Yellow */
+  }
+
+  .dark {
+    --background: 0 0% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 48 96% 53%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 0 0% 14.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 14.9%;
+    --muted-foreground: 0 0% 63.9%;
+    --accent: 0 0% 14.9%;
+    --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-
-    --radius: 0.75rem;
-
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 14.9%;
+    --input: 0 0% 14.9%;
+    --ring: 48 96% 53%;
   }
 }
 
@@ -52,24 +74,31 @@
   * {
     @apply border-border;
   }
-
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
 }
 
 @layer utilities {
-  .glass {
-    @apply bg-white/10 backdrop-blur-md border border-white/20;
+  .aige-yellow {
+    @apply bg-yellow-400 text-black;
   }
   
-  .glass-card {
-    @apply bg-card/40 backdrop-blur-xl border border-border/40;
+  .aige-yellow-hover {
+    @apply hover:bg-yellow-300 hover:shadow-lg hover:shadow-yellow-400/25;
+  }
+  
+  .aige-glow {
+    @apply shadow-lg shadow-yellow-400/25;
+  }
+  
+  .aige-sidebar {
+    @apply bg-black text-white;
   }
 }
 
-/* Custom animations for enhanced user experience */
+/* Custom animations */
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -81,12 +110,12 @@
   }
 }
 
-@keyframes shimmer {
-  from {
-    background-position: -200% 0;
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(250, 204, 21, 0.3);
   }
-  to {
-    background-position: 200% 0;
+  50% {
+    box-shadow: 0 0 20px rgba(250, 204, 21, 0.6);
   }
 }
 
@@ -94,13 +123,6 @@
   animation: fadeInUp 0.5s ease-out;
 }
 
-.animate-shimmer {
-  animation: shimmer 2s linear infinite;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.1),
-    transparent
-  );
-  background-size: 200% 100%;
+.animate-glow {
+  animation: glow 2s ease-in-out infinite;
 }

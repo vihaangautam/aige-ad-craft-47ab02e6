@@ -1,27 +1,64 @@
+
+import { useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
+import { DashboardLayout } from "@/components/DashboardLayout";
+import { HomePage } from "@/pages/HomePage";
+import { CreateAdPage } from "@/pages/CreateAdPage";
+import { ProjectsPage } from "@/pages/ProjectsPage";
+import { AnalyticsPage } from "@/pages/AnalyticsPage";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  const [currentPath, setCurrentPath] = useState("/");
+
+  const handleNavigate = (path: string) => {
+    setCurrentPath(path);
+  };
+
+  const renderCurrentPage = () => {
+    switch (currentPath) {
+      case "/":
+        return <HomePage onNavigate={handleNavigate} />;
+      case "/create":
+        return <CreateAdPage onNavigate={handleNavigate} />;
+      case "/projects":
+        return <ProjectsPage onNavigate={handleNavigate} />;
+      case "/analytics":
+        return <AnalyticsPage onNavigate={handleNavigate} />;
+      case "/settings":
+        return (
+          <div className="p-8 text-center">
+            <h1 className="text-2xl font-bold text-black mb-4">Settings</h1>
+            <p className="text-gray-600">Settings page coming soon</p>
+          </div>
+        );
+      case "/billing":
+        return (
+          <div className="p-8 text-center">
+            <h1 className="text-2xl font-bold text-black mb-4">Billing</h1>
+            <p className="text-gray-600">Billing page coming soon</p>
+          </div>
+        );
+      default:
+        return <HomePage onNavigate={handleNavigate} />;
+    }
+  };
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <DashboardLayout currentPath={currentPath} onNavigate={handleNavigate}>
+          {renderCurrentPage()}
+        </DashboardLayout>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
