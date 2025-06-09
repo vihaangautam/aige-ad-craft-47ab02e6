@@ -10,6 +10,7 @@ import {
   SidebarMenuItem,
   SidebarHeader,
 } from "@/components/ui/sidebar";
+import logo from "@/assets/download.jpg";
 
 const menuItems = [
   {
@@ -54,9 +55,13 @@ export function AIGESidebar({ currentPath, onNavigate }: AIGESidebarProps) {
     <Sidebar className="border-r border-gray-800">
       <SidebarHeader className="p-6 border-b border-gray-800">
         <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 bg-yellow-400 rounded-lg flex items-center justify-center">
-            <span className="text-black font-bold text-sm">AI</span>
-          </div>
+          <div className="w-12 h-12 rounded-lg overflow-hidden">
+            <img
+              src={logo}
+              alt="Company Logo"
+  
+            />
+        </div>
           <h1 className="text-xl font-bold text-white">
             AIGE
           </h1>
