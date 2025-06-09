@@ -107,7 +107,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
     <div className="space-y-8 animate-fade-in-up">
       {/* Welcome Section */}
       <div>
-        <h1 className="text-3xl font-bold text-black mb-2">Welcome back, Alex</h1>
+        <h1 className="text-3xl font-bold text-black mb-2">Welcome back, User</h1>
         <p className="text-gray-600">Here's what's happening with your AIGE campaigns today.</p>
       </div>
 
