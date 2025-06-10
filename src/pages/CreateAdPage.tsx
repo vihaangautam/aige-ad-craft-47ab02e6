@@ -1,9 +1,11 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, Camera, Gamepad2, Image, ArrowRight, ArrowLeft } from "lucide-react";
 import { StoryAdConfigForm } from "@/components/StoryAdConfigForm";
+import { StoryFlowBuilder } from "@/components/StoryFlowBuilder";
 
 interface CreateAdPageProps {
   onNavigate: (path: string) => void;
@@ -157,6 +159,37 @@ export function CreateAdPage({ onNavigate }: CreateAdPageProps) {
     );
   };
 
+  const renderStep3 = () => {
+    if (selectedAdType === "immersive-story") {
+      return (
+        <StoryFlowBuilder 
+          onBack={handleBack}
+          onNext={handleNext}
+        />
+      );
+    }
+
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold text-black mb-2">Build Your Flow</h2>
+          <p className="text-gray-600">Create the interactive flow for your {selectedAdType} experience</p>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Coming Soon</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-600">
+              Flow builder for other ad types will be available soon.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  };
+
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-fade-in-up">
       {/* Header */}
@@ -181,6 +214,7 @@ export function CreateAdPage({ onNavigate }: CreateAdPageProps) {
       {/* Step Content */}
       {currentStep === 1 && renderStep1()}
       {currentStep === 2 && renderStep2()}
+      {currentStep === 3 && renderStep3()}
     </div>
   );
 }
