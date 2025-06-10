@@ -1,9 +1,9 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, Camera, Gamepad2, Image, ArrowRight, ArrowLeft } from "lucide-react";
+import { StoryAdConfigForm } from "@/components/StoryAdConfigForm";
 
 interface CreateAdPageProps {
   onNavigate: (path: string) => void;
@@ -52,9 +52,16 @@ export function CreateAdPage({ onNavigate }: CreateAdPageProps) {
   const handleBack = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
+      if (currentStep === 2) {
+        setSelectedAdType(null);
+      }
     } else {
       onNavigate("/");
     }
+  };
+
+  const handleNext = () => {
+    setCurrentStep(currentStep + 1);
   };
 
   const renderStepIndicator = () => (
@@ -118,26 +125,37 @@ export function CreateAdPage({ onNavigate }: CreateAdPageProps) {
     </div>
   );
 
-  const renderStep2 = () => (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-black mb-2">Configure Your Ad</h2>
-        <p className="text-gray-600">Set up the basic configuration for your {selectedAdType} experience</p>
-      </div>
+  const renderStep2 = () => {
+    if (selectedAdType === "immersive-story") {
+      return (
+        <StoryAdConfigForm 
+          onBack={handleBack}
+          onNext={handleNext}
+        />
+      );
+    }
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Coming Soon</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-gray-600">
-            This step will include form fields for theme prompts, tone/mood selection, 
-            product image uploaders, and other configuration options.
-          </p>
-        </CardContent>
-      </Card>
-    </div>
-  );
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold text-black mb-2">Configure Your Ad</h2>
+          <p className="text-gray-600">Set up the basic configuration for your {selectedAdType} experience</p>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Coming Soon</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-600">
+              This step will include form fields for theme prompts, tone/mood selection, 
+              product image uploaders, and other configuration options.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  };
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-fade-in-up">
