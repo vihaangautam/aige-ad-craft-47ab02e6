@@ -20,7 +20,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { ZoomIn, ZoomOut, Maximize, Trash2, Save, Play, ArrowRight } from 'lucide-react';
 import { StoryNode } from './StoryNode';
 
-interface StoryNodeData {
+interface StoryNodeData extends Record<string, unknown> {
   title: string;
   description: string;
   nodeType: string;
@@ -35,7 +35,7 @@ interface StoryFlowBuilderProps {
   onNext: () => void;
 }
 
-const initialNodes: Node[] = [
+const initialNodes: Node<StoryNodeData>[] = [
   {
     id: '1',
     type: 'storyNode',
