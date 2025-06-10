@@ -12,15 +12,21 @@ import {
   Node,
   ReactFlowProvider,
   useReactFlow,
+  NodeTypes,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { ZoomIn, ZoomOut, Maximize, Trash2, Save, Play, ArrowRight } from 'lucide-react';
 import { StoryNode } from './StoryNode';
 
-const nodeTypes = {
+interface StoryNodeData {
+  title: string;
+  description: string;
+  nodeType: string;
+}
+
+const nodeTypes: NodeTypes = {
   storyNode: StoryNode,
 };
 
@@ -49,7 +55,7 @@ function FlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [nodeId, setNodeId] = useState(2);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const { project, fitView, zoomIn, zoomOut } = useReactFlow();
+  const { screenToFlowPosition, fitView, zoomIn, zoomOut } = useReactFlow();
 
   const onConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge(params, eds)),
@@ -70,12 +76,12 @@ function FlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
         return;
       }
 
-      const position = project({
-        x: event.clientX - (reactFlowWrapper.current?.getBoundingClientRect().left || 0),
-        y: event.clientY - (reactFlowWrapper.current?.getBoundingClientRect().top || 0),
+      const position = screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
       });
 
-      const newNode: Node = {
+      const newNode: Node<StoryNodeData> = {
         id: nodeId.toString(),
         type: 'storyNode',
         position,
@@ -89,7 +95,7 @@ function FlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
       setNodes((nds) => nds.concat(newNode));
       setNodeId((id) => id + 1);
     },
-    [project, nodeId, setNodes]
+    [screenToFlowPosition, nodeId, setNodes]
   );
 
   const getDefaultDescription = (type: string) => {
