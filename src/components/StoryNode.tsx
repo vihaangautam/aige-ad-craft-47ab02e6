@@ -28,7 +28,7 @@ export const StoryNode = memo(({ data }: NodeProps<StoryNodeData>) => {
       case 'Scene': return '🎬';
       case 'Option Point': return '🔀';
       case 'Game': return '🎮';
-      case 'AR Model': return '✨';
+      case 'AR Module': return '✨';
       default: return '📦';
     }
   };
