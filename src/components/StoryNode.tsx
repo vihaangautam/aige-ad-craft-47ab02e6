@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Plus } from 'lucide-react';
 
-interface StoryNodeData {
+interface StoryNodeData extends Record<string, unknown> {
   title: string;
   description: string;
   nodeType: string;
