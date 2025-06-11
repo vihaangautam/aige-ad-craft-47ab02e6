@@ -22,6 +22,7 @@ interface StoryNodeData {
   title: string;
   description: string;
   nodeType: 'Scene' | 'Option Point' | 'Game' | 'AR Filter' | string;
+  [key: string]: any;
 }
 
 const nodeTypes = {
