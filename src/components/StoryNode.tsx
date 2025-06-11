@@ -12,7 +12,7 @@ interface StoryNodeData extends Record<string, unknown> {
   nodeType: string;
 }
 
-export const StoryNode = memo<NodeProps<StoryNodeData>>(({ data }) => {
+export const StoryNode = memo(({ data }: NodeProps<StoryNodeData>) => {
   const getNodeColor = (type: string) => {
     switch (type) {
       case 'Scene': return 'bg-blue-50 border-blue-200';

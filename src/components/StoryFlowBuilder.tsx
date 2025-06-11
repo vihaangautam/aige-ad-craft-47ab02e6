@@ -27,7 +27,7 @@ interface StoryNodeData extends Record<string, unknown> {
 }
 
 const nodeTypes: NodeTypes = {
-  storyNode: StoryNode as React.FC<any>,
+  storyNode: StoryNode,
 };
 
 interface StoryFlowBuilderProps {
