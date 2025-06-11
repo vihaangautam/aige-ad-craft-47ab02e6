@@ -20,7 +20,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { ZoomIn, ZoomOut, Maximize, Trash2, Save, Play, ArrowRight } from 'lucide-react';
 import '@xyflow/react/dist/style.css';
 
-interface StoryNodeData extends Record<string, unknown> {
+interface StoryNodeData {
   title: string;
   description: string;
   nodeType: string;
