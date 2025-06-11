@@ -1,3 +1,4 @@
+
 import { memo } from 'react';
 import { Handle, Position, NodeProps } from '@xyflow/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,7 +12,6 @@ interface StoryNodeData extends Record<string, unknown> {
   nodeType: 'Scene' | 'Option Point' | 'Game' | 'AR Filter' | string;
 }
 
-// ✅ Tell TS this component receives props with data: StoryNodeData
 export const StoryNode = memo(function StoryNodeComponent({
   data,
 }: NodeProps<StoryNodeData>) {

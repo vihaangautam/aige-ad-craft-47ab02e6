@@ -1,3 +1,4 @@
+
 import {
   ReactFlow,
   Controls,
@@ -11,7 +12,6 @@ import {
   ReactFlowProvider,
   useReactFlow,
   NodeTypes,
-  NodeProps,
 } from '@xyflow/react';
 import { useState, useCallback, useRef } from 'react';
 import { StoryNode } from './StoryNode';
@@ -20,7 +20,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { ZoomIn, ZoomOut, Maximize, Trash2, Save, Play, ArrowRight } from 'lucide-react';
 import '@xyflow/react/dist/style.css';
 
-interface StoryNodeData {
+interface StoryNodeData extends Record<string, unknown> {
   title: string;
   description: string;
   nodeType: string;
