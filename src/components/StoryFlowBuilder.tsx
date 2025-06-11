@@ -51,7 +51,7 @@ const initialNodes: Node<StoryNodeData>[] = [
 const initialEdges: Edge[] = [];
 
 function FlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
-  const [nodes, setNodes, onNodesChange] = useNodesState<StoryNodeData>(initialNodes);
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [nodeId, setNodeId] = useState(2);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
