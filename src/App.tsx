@@ -10,6 +10,7 @@ import { CreateAdPage } from "@/pages/CreateAdPage";
 import { ProjectsPage } from "@/pages/ProjectsPage";
 import { AnalyticsPage } from "@/pages/AnalyticsPage";
 import { AuthPage } from "@/pages/AuthPage";
+import { SettingsPage } from "@/pages/SettingsPage";
 
 const queryClient = new QueryClient();
 
@@ -33,12 +34,7 @@ const App = () => {
       case "/analytics":
         return <AnalyticsPage onNavigate={handleNavigate} />;
       case "/settings":
-        return (
-          <div className="p-8 text-center">
-            <h1 className="text-2xl font-bold text-black mb-4">Settings</h1>
-            <p className="text-gray-600">Settings page coming soon</p>
-          </div>
-        );
+        return <SettingsPage onNavigate={handleNavigate} />;
       case "/billing":
         return (
           <div className="p-8 text-center">
