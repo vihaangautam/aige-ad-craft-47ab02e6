@@ -1,5 +1,3 @@
-
-import { useState, useCallback, useRef } from 'react';
 import {
   ReactFlow,
   Controls,
@@ -13,12 +11,14 @@ import {
   ReactFlowProvider,
   useReactFlow,
   NodeTypes,
+  NodeProps,
 } from '@xyflow/react';
-import '@xyflow/react/dist/style.css';
+import { useState, useCallback, useRef } from 'react';
+import { StoryNode } from './StoryNode';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ZoomIn, ZoomOut, Maximize, Trash2, Save, Play, ArrowRight } from 'lucide-react';
-import { StoryNode } from './StoryNode';
+import '@xyflow/react/dist/style.css';
 
 interface StoryNodeData extends Record<string, unknown> {
   title: string;
@@ -51,7 +51,7 @@ const initialNodes: Node<StoryNodeData>[] = [
 const initialEdges: Edge[] = [];
 
 function FlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [nodes, setNodes, onNodesChange] = useNodesState<StoryNodeData>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [nodeId, setNodeId] = useState(2);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
@@ -67,14 +67,21 @@ function FlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
     event.dataTransfer.dropEffect = 'move';
   }, []);
 
+  const getDefaultDescription = (type: string) => {
+    switch (type) {
+      case 'Scene': return 'New scene description';
+      case 'Option Point': return 'User choice point';
+      case 'Game': return 'Interactive game element';
+      case 'AR Filter': return 'AR visual effect';
+      default: return 'Description';
+    }
+  };
+
   const onDrop = useCallback(
     (event: React.DragEvent) => {
       event.preventDefault();
-
       const type = event.dataTransfer.getData('application/reactflow');
-      if (typeof type === 'undefined' || !type) {
-        return;
-      }
+      if (!type) return;
 
       const position = screenToFlowPosition({
         x: event.clientX,
@@ -92,21 +99,11 @@ function FlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
         },
       };
 
-      setNodes((nds) => nds.concat(newNode));
+      setNodes((nds) => [...nds, newNode]);
       setNodeId((id) => id + 1);
     },
     [screenToFlowPosition, nodeId, setNodes]
   );
-
-  const getDefaultDescription = (type: string) => {
-    switch (type) {
-      case 'Scene': return 'New scene description';
-      case 'Option Point': return 'User choice point';
-      case 'Game': return 'Interactive game element';
-      case 'AR Filter': return 'AR visual effect';
-      default: return 'Description';
-    }
-  };
 
   const clearAll = () => {
     setNodes([]);
@@ -116,7 +113,7 @@ function FlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
 
   return (
     <div className="flex h-[80vh] bg-white rounded-lg border border-gray-200 overflow-hidden">
-      {/* Left Sidebar */}
+      {/* Sidebar */}
       <div className="w-64 bg-gray-50 border-r border-gray-200 p-4">
         <h3 className="text-lg font-semibold text-black mb-4">Scene Blocks</h3>
         <div className="space-y-3">
@@ -126,45 +123,25 @@ function FlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
         </div>
       </div>
 
-      {/* Main Canvas */}
+      {/* Main Area */}
       <div className="flex-1 flex flex-col">
-        {/* Top Toolbar */}
+        {/* Toolbar */}
         <div className="bg-gray-50 border-b border-gray-200 p-3 flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => zoomIn()}
-            className="border-gray-300 hover:border-yellow-400"
-          >
+          <Button variant="outline" size="sm" onClick={() => zoomIn()}>
             <ZoomIn className="w-4 h-4" />
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => zoomOut()}
-            className="border-gray-300 hover:border-yellow-400"
-          >
+          <Button variant="outline" size="sm" onClick={() => zoomOut()}>
             <ZoomOut className="w-4 h-4" />
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => fitView()}
-            className="border-gray-300 hover:border-yellow-400"
-          >
+          <Button variant="outline" size="sm" onClick={() => fitView()}>
             <Maximize className="w-4 h-4" />
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={clearAll}
-            className="border-gray-300 hover:border-red-400 hover:text-red-600"
-          >
+          <Button variant="outline" size="sm" onClick={clearAll}>
             <Trash2 className="w-4 h-4" />
           </Button>
         </div>
 
-        {/* Flow Canvas */}
+        {/* Canvas */}
         <div className="flex-1" ref={reactFlowWrapper}>
           <ReactFlow
             nodes={nodes}
@@ -183,28 +160,17 @@ function FlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
           </ReactFlow>
         </div>
 
-        {/* Bottom Toolbar */}
+        {/* Footer */}
         <div className="bg-gray-50 border-t border-gray-200 p-4 flex items-center justify-between">
-          <Button
-            variant="outline"
-            onClick={onBack}
-            className="border-gray-300 hover:border-yellow-400"
-          >
+          <Button variant="outline" onClick={onBack}>
             Back
           </Button>
-          
           <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              className="border-gray-300 hover:border-yellow-400"
-            >
+            <Button variant="outline">
               <Save className="w-4 h-4 mr-2" />
               Save Draft
             </Button>
-            <Button
-              variant="outline"
-              className="border-gray-300 hover:border-yellow-400"
-            >
+            <Button variant="outline">
               <Play className="w-4 h-4 mr-2" />
               Preview
             </Button>
