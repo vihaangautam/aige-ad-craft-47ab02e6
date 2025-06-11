@@ -134,7 +134,7 @@ export function StoryAdConfigForm({ onBack, onNext }: StoryAdConfigFormProps) {
           
           <div className="flex items-center justify-between p-4 rounded-lg border border-gray-200 bg-gray-50">
             <div className="space-y-1">
-              <Label className="text-base font-medium text-black">Enable AR Filters</Label>
+              <Label className="text-base font-medium text-black">Enable AR Effects</Label>
               <p className="text-sm text-gray-600">Add interactive AR visual effects to your story</p>
             </div>
             <Switch

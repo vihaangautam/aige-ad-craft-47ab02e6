@@ -65,15 +65,6 @@ const Index = () => {
       interactions: 0,
       thumbnail: "",
       createdAt: "1 week ago"
-    },
-    {
-      id: "4",
-      name: "Luxury Watch AR Showcase",
-      status: "paused" as const,
-      views: 23450,
-      interactions: 5670,
-      thumbnail: "",
-      createdAt: "3 weeks ago"
     }
   ];
 
