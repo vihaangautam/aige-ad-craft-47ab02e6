@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useRef } from 'react';
 import {
   ReactFlow,
@@ -20,7 +19,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { ZoomIn, ZoomOut, Maximize, Trash2, Save, Play, ArrowRight } from 'lucide-react';
 import { StoryNode } from './StoryNode';
 
-interface StoryNodeData extends Record<string, unknown> {
+interface StoryNodeData {
   title: string;
   description: string;
   nodeType: string;
