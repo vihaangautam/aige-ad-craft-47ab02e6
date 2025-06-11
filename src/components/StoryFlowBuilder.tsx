@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useRef } from 'react';
 import {
   ReactFlow,
@@ -19,14 +20,14 @@ import { Card, CardContent } from '@/components/ui/card';
 import { ZoomIn, ZoomOut, Maximize, Trash2, Save, Play, ArrowRight } from 'lucide-react';
 import { StoryNode } from './StoryNode';
 
-interface StoryNodeData {
+interface StoryNodeData extends Record<string, unknown> {
   title: string;
   description: string;
   nodeType: string;
 }
 
 const nodeTypes: NodeTypes = {
-  storyNode: StoryNode,
+  storyNode: StoryNode as React.FC<any>,
 };
 
 interface StoryFlowBuilderProps {
@@ -50,7 +51,7 @@ const initialNodes: Node<StoryNodeData>[] = [
 const initialEdges: Edge[] = [];
 
 function FlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [nodes, setNodes, onNodesChange] = useNodesState<StoryNodeData>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [nodeId, setNodeId] = useState(2);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);

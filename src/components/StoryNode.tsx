@@ -6,13 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Plus } from 'lucide-react';
 
-interface StoryNodeData {
+interface StoryNodeData extends Record<string, unknown> {
   title: string;
   description: string;
   nodeType: string;
 }
 
-export const StoryNode = memo(({ data }: NodeProps<StoryNodeData>) => {
+export const StoryNode = memo<NodeProps<StoryNodeData>>(({ data }) => {
   const getNodeColor = (type: string) => {
     switch (type) {
       case 'Scene': return 'bg-blue-50 border-blue-200';
