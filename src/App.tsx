@@ -9,6 +9,7 @@ import { HomePage } from "@/pages/HomePage";
 import { CreateAdPage } from "@/pages/CreateAdPage";
 import { ProjectsPage } from "@/pages/ProjectsPage";
 import { AnalyticsPage } from "@/pages/AnalyticsPage";
+import { AuthPage } from "@/pages/AuthPage";
 
 const queryClient = new QueryClient();
 
@@ -23,6 +24,8 @@ const App = () => {
     switch (currentPath) {
       case "/":
         return <HomePage onNavigate={handleNavigate} />;
+      case "/auth":
+        return <AuthPage onNavigate={handleNavigate} />;
       case "/create":
         return <CreateAdPage onNavigate={handleNavigate} />;
       case "/projects":
@@ -47,6 +50,19 @@ const App = () => {
         return <HomePage onNavigate={handleNavigate} />;
     }
   };
+
+  // Show auth page without layout for auth routes
+  if (currentPath === "/auth") {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <AuthPage onNavigate={handleNavigate} />
+        </TooltipProvider>
+      </QueryClientProvider>
+    );
+  }
 
   return (
     <QueryClientProvider client={queryClient}>
