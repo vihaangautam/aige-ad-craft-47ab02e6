@@ -1,6 +1,6 @@
 
 import { memo } from 'react';
-import { Handle, Position, NodeProps } from '@xyflow/react';
+import { Handle, Position, NodeProps, Node } from '@xyflow/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -10,11 +10,14 @@ interface StoryNodeData {
   title: string;
   description: string;
   nodeType: 'Scene' | 'Option Point' | 'Game' | 'AR Filter' | string;
+  [key: string]: any;
 }
+
+type StoryFlowNode = Node<StoryNodeData, 'storyNode'>;
 
 export const StoryNode = memo(function StoryNodeComponent({
   data,
-}: NodeProps<StoryNodeData>) {
+}: NodeProps<StoryFlowNode>) {
   const getNodeColor = (type: string) => {
     switch (type) {
       case 'Scene': return 'bg-blue-50 border-blue-200';
