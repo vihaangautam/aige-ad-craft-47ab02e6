@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react"; // Added useEffect
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -9,13 +8,32 @@ import { HomePage } from "@/pages/HomePage";
 import { CreateAdPage } from "@/pages/CreateAdPage";
 import { ProjectsPage } from "@/pages/ProjectsPage";
 import { AnalyticsPage } from "@/pages/AnalyticsPage";
-import { AuthPage } from "@/pages/AuthPage";
+import AuthPage from "@/pages/AuthPage"; // Updated import
 import { SettingsPage } from "@/pages/SettingsPage";
 
 const queryClient = new QueryClient();
 
 const App = () => {
-  const [currentPath, setCurrentPath] = useState("/");
+  // Initialize currentPath from window.location.pathname
+  const [currentPath, setCurrentPath] = useState(window.location.pathname);
+
+  // Effect to handle browser navigation (back/forward)
+  useEffect(() => {
+    const handlePopState = (event: PopStateEvent) => {
+      setCurrentPath(window.location.pathname);
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, []);
+
+  // Effect to update browser history when currentPath changes internally
+  useEffect(() => {
+    if (window.location.pathname !== currentPath) {
+      window.history.pushState({}, "", currentPath);
+    }
+  }, [currentPath]);
 
   const handleNavigate = (path: string) => {
     setCurrentPath(path);
@@ -26,7 +44,7 @@ const App = () => {
       case "/":
         return <HomePage onNavigate={handleNavigate} />;
       case "/auth":
-        return <AuthPage onNavigate={handleNavigate} />;
+        return <AuthPage onNavigate={handleNavigate} />; // This should now work
       case "/create":
         return <CreateAdPage onNavigate={handleNavigate} />;
       case "/projects":
@@ -43,6 +61,11 @@ const App = () => {
           </div>
         );
       default:
+        // Handle 404 or redirect to a known page, e.g., home
+        // For now, let's render HomePage for unknown paths to avoid breaking
+        // if a path like /favicon.ico is mistakenly processed.
+        // A more robust solution would be a dedicated 404 component.
+        console.warn(`Unknown path: ${currentPath}, rendering HomePage.`);
         return <HomePage onNavigate={handleNavigate} />;
     }
   };

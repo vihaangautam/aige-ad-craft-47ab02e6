@@ -12,7 +12,7 @@ interface AuthPageProps {
   onNavigate: (path: string) => void;
 }
 
-export const AuthPage = ({ onNavigate }: AuthPageProps) => {
+export default function AuthPage({ onNavigate }: AuthPageProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
