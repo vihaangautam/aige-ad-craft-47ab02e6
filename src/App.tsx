@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react"; // Added useEffect
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -21,53 +22,76 @@ import {
 
 const queryClient = new QueryClient();
 
-function AppRoutes() {
-  const location = useLocation();
-  const navigate = useNavigate();
+const App = () => {
+  // Initialize currentPath from window.location.pathname
+  const [currentPath, setCurrentPath] = useState(window.location.pathname);
 
-  const isAuthRoute = location.pathname === "/auth";
+  // Effect to handle browser navigation (back/forward)
+  useEffect(() => {
+    const handlePopState = (event: PopStateEvent) => {
+      setCurrentPath(window.location.pathname);
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, []);
+
+  // Effect to update browser history when currentPath changes internally
+  useEffect(() => {
+    if (window.location.pathname !== currentPath) {
+      window.history.pushState({}, "", currentPath);
+    }
+  }, [currentPath]);
 
   const handleNavigate = (path: string) => {
-    navigate(path);
+    setCurrentPath(path);
   };
 
-  const LayoutWrapper = ({ children }: { children: React.ReactNode }) =>
-    isAuthRoute ? (
-      <>{children}</>
-    ) : (
-      <DashboardLayout currentPath={location.pathname} onNavigate={handleNavigate}>
-        {children}
-      </DashboardLayout>
+  const renderCurrentPage = () => {
+    switch (currentPath) {
+      case "/":
+        return <HomePage onNavigate={handleNavigate} />;
+      case "/auth":
+        return <AuthPage onNavigate={handleNavigate} />; // This should now work
+      case "/create":
+        return <CreateAdPage onNavigate={handleNavigate} />;
+      case "/projects":
+        return <ProjectsPage onNavigate={handleNavigate} />;
+      case "/analytics":
+        return <AnalyticsPage onNavigate={handleNavigate} />;
+      case "/settings":
+        return <SettingsPage onNavigate={handleNavigate} />;
+      case "/billing":
+        return (
+          <div className="p-8 text-center">
+            <h1 className="text-2xl font-bold text-black mb-4">Billing</h1>
+            <p className="text-gray-600">Billing page coming soon</p>
+          </div>
+        );
+      default:
+        // Handle 404 or redirect to a known page, e.g., home
+        // For now, let's render HomePage for unknown paths to avoid breaking
+        // if a path like /favicon.ico is mistakenly processed.
+        // A more robust solution would be a dedicated 404 component.
+        console.warn(`Unknown path: ${currentPath}, rendering HomePage.`);
+        return <HomePage onNavigate={handleNavigate} />;
+    }
+  };
+
+  // Show auth page without layout for auth routes
+  if (currentPath === "/auth") {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <AuthPage onNavigate={handleNavigate} />
+        </TooltipProvider>
+      </QueryClientProvider>
     );
+  }
 
-  return (
-    <LayoutWrapper>
-      <Routes>
-        <Route path="/" element={<HomePage onNavigate={handleNavigate} />} />
-        <Route path="/auth" element={<AuthPage onNavigate={handleNavigate} />} />
-        <Route path="/create" element={<CreateAdPage onNavigate={handleNavigate} />} />
-        <Route path="/projects" element={<ProjectsPage onNavigate={handleNavigate} />} />
-        <Route path="/analytics" element={<AnalyticsPage onNavigate={handleNavigate} />} />
-        <Route path="/settings" element={<SettingsPage onNavigate={handleNavigate} />} />
-        <Route
-          path="/billing"
-          element={
-            <div className="p-8 text-center">
-              <h1 className="text-2xl font-bold text-black mb-4">Billing</h1>
-              <p className="text-gray-600">Billing page coming soon</p>
-            </div>
-          }
-        />
-        <Route
-          path="*"
-          element={<HomePage onNavigate={handleNavigate} />}
-        />
-      </Routes>
-    </LayoutWrapper>
-  );
-}
-
-export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>

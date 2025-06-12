@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +11,7 @@ interface AuthPageProps {
   onNavigate: (path: string) => void;
 }
 
-export default function AuthPage({ onNavigate }: AuthPageProps) {
+const AuthPage = ({ onNavigate }: AuthPageProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -344,3 +343,5 @@ export default function AuthPage({ onNavigate }: AuthPageProps) {
     </div>
   );
 };
+
+export default AuthPage;
