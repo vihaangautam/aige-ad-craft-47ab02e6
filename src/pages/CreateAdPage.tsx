@@ -6,10 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Sparkles, Camera, Gamepad2, Image, ArrowRight, ArrowLeft } from "lucide-react";
 import { StoryAdConfigForm } from "@/components/StoryAdConfigForm";
 import { StoryFlowBuilder } from "@/components/StoryFlowBuilder";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 
-interface CreateAdPageProps {
-  onNavigate: (path: string) => void;
-}
+// Remove CreateAdPageProps interface
 
 const adTypes = [
   {
@@ -42,7 +41,8 @@ const adTypes = [
   }
 ];
 
-export function CreateAdPage({ onNavigate }: CreateAdPageProps) {
+export function CreateAdPage() { // Remove onNavigate from props
+  const navigate = useNavigate(); // Initialize useNavigate
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedAdType, setSelectedAdType] = useState<string | null>(null);
 
@@ -58,7 +58,7 @@ export function CreateAdPage({ onNavigate }: CreateAdPageProps) {
         setSelectedAdType(null);
       }
     } else {
-      onNavigate("/");
+      navigate("/"); // Use navigate
     }
   };
 

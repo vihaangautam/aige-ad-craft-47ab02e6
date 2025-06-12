@@ -30,11 +30,9 @@ interface SettingsData {
   };
 }
 
-interface SettingsPageProps {
-  onNavigate?: (path: string) => void;
-}
+// Remove SettingsPageProps interface
 
-export function SettingsPage({ onNavigate }: SettingsPageProps) {
+export function SettingsPage() { // Remove onNavigate from props
   const [settings, setSettings] = useState<SettingsData>({
     profile: {
       name: 'John Doe',

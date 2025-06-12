@@ -33,9 +33,7 @@ import {
   Area
 } from 'recharts';
 
-interface AnalyticsPageProps {
-  onNavigate: (path: string) => void;
-}
+// Remove AnalyticsPageProps interface
 
 // Sample data for charts
 const viewsData = [
@@ -62,7 +60,7 @@ const campaignsData = [
   { id: 5, name: 'Holiday Collection Launch', views: '540K', ctr: '3.7%', conversion: '2.8%', status: 'Completed' },
 ];
 
-export function AnalyticsPage({ onNavigate }: AnalyticsPageProps) {
+export function AnalyticsPage() { // Remove onNavigate from props
   const [timeRange, setTimeRange] = useState('30d');
   const [searchTerm, setSearchTerm] = useState('');
 

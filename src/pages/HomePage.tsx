@@ -3,12 +3,12 @@ import { Plus, FileImage, Eye, QrCode, TrendingUp, Smartphone } from "lucide-rea
 import MetricCard from "@/components/MetricCard";
 import QuickActionCard from "@/components/QuickActionCard";
 import ProjectCard from "@/components/ProjectCard";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 
-interface HomePageProps {
-  onNavigate: (path: string) => void;
-}
+// Remove HomePageProps interface
 
-export function HomePage({ onNavigate }: HomePageProps) {
+export function HomePage() { // Remove onNavigate from props
+  const navigate = useNavigate(); // Initialize useNavigate
   const metrics = [
     {
       title: "Total Ads Created",
@@ -45,13 +45,13 @@ export function HomePage({ onNavigate }: HomePageProps) {
       title: "Create New Ad",
       description: "Start building your AR-powered ad experience",
       icon: Plus,
-      onClick: () => onNavigate("/create")
+      onClick: () => navigate("/create") // Use navigate
     },
     {
       title: "Browse Templates",
       description: "Explore pre-built ad templates",
       icon: FileImage,
-      onClick: () => onNavigate("/templates")
+      onClick: () => navigate("/templates") // Use navigate
     }
   ];
 
@@ -96,7 +96,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
 
   const handleEditProject = (id: string) => {
     console.log("Edit project:", id);
-    onNavigate("/create");
+    navigate("/create"); // Use navigate
   };
 
   const handleDeleteProject = (id: string) => {
@@ -133,7 +133,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold text-black">Recent Projects</h2>
           <button 
-            onClick={() => onNavigate("/projects")}
+            onClick={() => navigate("/projects")} // Use navigate
             className="text-yellow-600 hover:text-yellow-700 font-medium"
           >
             View All Projects

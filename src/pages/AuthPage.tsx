@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,11 +8,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Eye, EyeOff, Sparkles, Zap, ArrowRight } from "lucide-react";
 
-interface AuthPageProps {
-  onNavigate: (path: string) => void;
-}
+// Remove AuthPageProps interface
 
-const AuthPage = ({ onNavigate }: AuthPageProps) => {
+const AuthPage = () => { // Remove onNavigate from props
+  const navigate = useNavigate(); // Initialize useNavigate
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -30,14 +30,14 @@ const AuthPage = ({ onNavigate }: AuthPageProps) => {
     e.preventDefault();
     console.log("Login attempt:", { email: formData.email, password: formData.password });
     // Simulate successful login
-    onNavigate("/");
+    navigate("/"); // Use navigate
   };
 
   const handleSignup = (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Signup attempt:", formData);
     // Simulate successful signup
-    onNavigate("/");
+    navigate("/"); // Use navigate
   };
 
   return (

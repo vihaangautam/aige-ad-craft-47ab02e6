@@ -6,12 +6,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Search, Plus, Filter } from "lucide-react";
 import ProjectCard from "@/components/ProjectCard";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 
-interface ProjectsPageProps {
-  onNavigate: (path: string) => void;
-}
+// Remove ProjectsPageProps interface
 
-export function ProjectsPage({ onNavigate }: ProjectsPageProps) {
+export function ProjectsPage() { // Remove onNavigate from props
+  const navigate = useNavigate(); // Initialize useNavigate
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
@@ -84,7 +84,7 @@ export function ProjectsPage({ onNavigate }: ProjectsPageProps) {
 
   const handleEditProject = (id: string) => {
     console.log("Edit project:", id);
-    onNavigate("/create");
+    navigate("/create"); // Use navigate
   };
 
   const handleDeleteProject = (id: string) => {
@@ -100,7 +100,7 @@ export function ProjectsPage({ onNavigate }: ProjectsPageProps) {
           <p className="text-gray-600">Manage your AIGE ad campaigns</p>
         </div>
         <Button 
-          onClick={() => onNavigate("/create")}
+          onClick={() => navigate("/create")} // Use navigate
           className="bg-yellow-400 hover:bg-yellow-300 text-black font-semibold hover:shadow-lg hover:shadow-yellow-400/25"
         >
           <Plus className="w-4 h-4 mr-2" />
@@ -180,7 +180,7 @@ export function ProjectsPage({ onNavigate }: ProjectsPageProps) {
         <div className="text-center py-12">
           <p className="text-gray-500 mb-4">No projects found matching your criteria</p>
           <Button 
-            onClick={() => onNavigate("/create")}
+            onClick={() => navigate("/create")} // Use navigate
             className="bg-yellow-400 hover:bg-yellow-300 text-black font-semibold"
           >
             Create Your First Ad
