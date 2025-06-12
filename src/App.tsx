@@ -98,7 +98,7 @@ const App = () => {
         <Toaster />
         <Sonner />
         <Router>
-          <AppRoutes />
+          <Routes />
         </Router>
       </TooltipProvider>
     </QueryClientProvider>
