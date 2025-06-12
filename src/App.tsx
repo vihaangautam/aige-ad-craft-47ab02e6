@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,7 +9,7 @@ import { HomePage } from "@/pages/HomePage";
 import { CreateAdPage } from "@/pages/CreateAdPage";
 import { ProjectsPage } from "@/pages/ProjectsPage";
 import { AnalyticsPage } from "@/pages/AnalyticsPage";
-import AuthPage from "@/pages/AuthPage"; // ✅ default import
+import AuthPage from "@/pages/AuthPage";
 import { SettingsPage } from "@/pages/SettingsPage";
 
 import {
@@ -16,7 +17,6 @@ import {
   Routes,
   Route,
   Navigate,
-  useRevalidator,
 } from "react-router-dom";
 
 const queryClient = new QueryClient();
@@ -30,14 +30,14 @@ const App = () => {
         <Router>
           <Routes>
             {/* Standalone Auth Page */}
-            <Route path="/auth" element={<AuthPage onNavigate={(path) => window.location.href = path} />} />
+            <Route path="/auth" element={<AuthPage />} />
 
             {/* All other pages inside Dashboard layout */}
             <Route
               path="/"
               element={
                 <DashboardLayout
-                  currentPath={window.location.pathname}
+                  currentPath="/"
                   onNavigate={(path) => window.location.href = path}
                 >
                   <HomePage onNavigate={(path) => window.location.href = path} />
