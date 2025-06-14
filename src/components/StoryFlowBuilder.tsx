@@ -14,7 +14,7 @@ import {
 import '@xyflow/react/dist/style.css';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Save, ArrowLeft, ArrowRight, Sparkles, Archive } from 'lucide-react';
+import { Plus, Save, ArrowLeft, ArrowRight, Sparkles, Archive, AlertCircle } from 'lucide-react';
 import { StoryNode } from './StoryNode';
 import { WorkspaceDrawer } from './WorkspaceDrawer';
 import { GeneratedAsset } from './WorkspaceModal';
@@ -62,9 +62,42 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
   const [pendingAssignment, setPendingAssignment] = useState<{ nodeId: string; option: 'A' | 'B' } | null>(null);
   const { toast } = useToast();
 
+  const validateConnection = (connection: Connection): boolean => {
+    const sourceNode = nodes.find(node => node.id === connection.source);
+    if (!sourceNode) return false;
+
+    const existingEdgesFromSource = edges.filter(edge => edge.source === connection.source);
+
+    // Scene nodes: max 1 outgoing connection
+    if (sourceNode.data.nodeType === 'Scene' && existingEdgesFromSource.length >= 1) {
+      toast({
+        title: "Connection Limit Reached",
+        description: "Scene nodes can only have one outgoing connection.",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    // Option Point nodes: max 2 outgoing connections
+    if (sourceNode.data.nodeType === 'Option Point' && existingEdgesFromSource.length >= 2) {
+      toast({
+        title: "Connection Limit Reached",
+        description: "Choice points can only have two outgoing connections (Option A and Option B).",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    return true;
+  };
+
   const onConnect = useCallback(
-    (params: Edge | Connection) => setEdges((eds) => addEdge(params, eds)),
-    [setEdges]
+    (params: Edge | Connection) => {
+      if (validateConnection(params)) {
+        setEdges((eds) => addEdge(params, eds));
+      }
+    },
+    [setEdges, nodes, edges, toast]
   );
 
   const getSceneCount = () => {
@@ -269,133 +302,148 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
         </div>
       </div>
 
-      <div className="flex flex-1 overflow-hidden">
-        {/* Left Sidebar - Story Blocks */}
-        <div className="w-64 bg-gray-50 border-r border-gray-200 p-4 overflow-y-auto">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Story Blocks</h3>
-          <div className="space-y-3">
-            <Button 
-              onClick={() => addNewNode('Scene')} 
-              className={`w-full justify-start ${
-                isSceneLimitReached 
-                  ? 'bg-gray-300 hover:bg-gray-300 text-gray-500 cursor-not-allowed' 
-                  : 'bg-blue-500 hover:bg-blue-600 text-white'
-              }`}
-              disabled={isSceneLimitReached}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Scene {isSceneLimitReached && '(Max 5)'}
-            </Button>
-            <Button 
-              onClick={() => addNewNode('Option Point')} 
-              className="w-full justify-start bg-yellow-400 hover:bg-yellow-500 text-black"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Choice Point
-            </Button>
-            <Button 
-              onClick={() => addNewNode('Game')} 
-              className="w-full justify-start bg-green-500 hover:bg-green-600 text-white"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Mini Game
-            </Button>
-            <Button 
-              onClick={() => addNewNode('AR Filter')} 
-              className="w-full justify-start bg-purple-500 hover:bg-purple-600 text-white"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              AR Filter
-            </Button>
-          </div>
-
-          {isSceneLimitReached && (
-            <div className="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
-              <p className="text-sm text-orange-700">
-                ⚠️ Maximum of 5 scenes reached
-              </p>
-            </div>
-          )}
-
-          <div className="mt-8 pt-4 border-t border-gray-200">
-            <h4 className="text-sm font-medium text-gray-700 mb-3">Project Actions</h4>
-            <div className="space-y-2">
-              <Button 
-                onClick={handleGenerateAssets}
-                disabled={isGeneratingAssets || sceneCount === 0}
-                className="w-full justify-start bg-purple-600 hover:bg-purple-700 text-white text-sm"
-                size="sm"
-              >
-                {isGeneratingAssets ? (
-                  <>
-                    <div className="w-4 h-4 mr-2 border border-white border-t-transparent rounded-full animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    Generate Assets
-                  </>
-                )}
-              </Button>
-              
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => setIsWorkspaceOpen(true)}
-                className="w-full justify-start border-purple-300 text-purple-700 hover:bg-purple-50"
-              >
-                <Archive className="w-4 h-4 mr-2" />
-                Open Workspace
-              </Button>
-              
-              <Button 
-                variant="outline" 
-                size="sm"
-                className="w-full justify-start border-yellow-400 text-yellow-700 hover:bg-yellow-50"
-              >
-                <Save className="w-4 h-4 mr-2" />
-                Save Flow
-              </Button>
-            </div>
-          </div>
+      {/* Top Toolbar - Story Elements */}
+      <div className="bg-gray-50 border-b border-gray-200 p-4">
+        <div className="mb-2">
+          <h3 className="text-sm font-medium text-gray-700">Story Elements</h3>
         </div>
-
-        {/* Main Canvas */}
-        <div className="flex-1 relative">
-          <ReactFlow
-            nodes={nodesWithCallbacks}
-            edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
-            nodeTypes={nodeTypes}
-            fitView
-            className="bg-gray-50"
-            fitViewOptions={{ padding: 0.2 }}
+        <div className="flex gap-3">
+          <Button 
+            onClick={() => addNewNode('Scene')} 
+            size="sm"
+            className={
+              isSceneLimitReached 
+                ? 'bg-gray-300 hover:bg-gray-300 text-gray-500 cursor-not-allowed' 
+                : 'bg-blue-500 hover:bg-blue-600 text-white'
+            }
+            disabled={isSceneLimitReached}
           >
-            <Controls />
-            <MiniMap />
-            <Background color="#aaa" gap={16} />
-          </ReactFlow>
+            <Plus className="w-4 h-4 mr-2" />
+            🎬 Scene {isSceneLimitReached && '(Max 5)'}
+          </Button>
+          <Button 
+            onClick={() => addNewNode('Option Point')} 
+            size="sm"
+            className="bg-yellow-400 hover:bg-yellow-500 text-black"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            🔀 Choice Point
+          </Button>
+          <Button 
+            onClick={() => addNewNode('Game')} 
+            size="sm"
+            className="bg-green-500 hover:bg-green-600 text-white"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            🎮 Mini Game
+          </Button>
+          <Button 
+            onClick={() => addNewNode('AR Filter')} 
+            size="sm"
+            className="bg-purple-500 hover:bg-purple-600 text-white"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            ✨ AR Filter
+          </Button>
         </div>
-
-        {/* Workspace Drawer */}
-        <WorkspaceDrawer
-          isOpen={isWorkspaceOpen}
-          onClose={() => {
-            setIsWorkspaceOpen(false);
-            setPendingAssignment(null);
-          }}
-          assets={generatedAssets}
-          onAssignAsset={handleAssignAsset}
-          onRegenerateAsset={handleRegenerateAsset}
-          onRegenerateAll={handleRegenerateAll}
-          isGenerating={isGeneratingAssets}
-          onGenerateAssets={handleGenerateAssets}
-          pendingAssignment={pendingAssignment}
-        />
+        
+        {isSceneLimitReached && (
+          <div className="mt-3 flex items-center gap-2 text-orange-600 text-sm">
+            <AlertCircle className="w-4 h-4" />
+            Maximum of 5 scenes reached
+          </div>
+        )}
       </div>
+
+      {/* Main Canvas */}
+      <div className="flex-1 relative">
+        {nodes.length === 1 && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+            <div className="text-center text-gray-500">
+              <div className="text-lg font-medium mb-2">Start building your story</div>
+              <div className="text-sm">Add scenes, choice points, and interactive elements above</div>
+            </div>
+          </div>
+        )}
+        
+        <ReactFlow
+          nodes={nodesWithCallbacks}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          nodeTypes={nodeTypes}
+          fitView
+          className="bg-gray-50"
+          fitViewOptions={{ padding: 0.2 }}
+        >
+          <Controls />
+          <MiniMap />
+          <Background color="#aaa" gap={16} />
+        </ReactFlow>
+      </div>
+
+      {/* Bottom Toolbar - Project Actions */}
+      <div className="bg-gray-50 border-t border-gray-200 p-4">
+        <div className="mb-2">
+          <h3 className="text-sm font-medium text-gray-700">Project Actions</h3>
+        </div>
+        <div className="flex gap-3">
+          <Button 
+            onClick={handleGenerateAssets}
+            disabled={isGeneratingAssets || sceneCount === 0}
+            size="sm"
+            className="bg-purple-600 hover:bg-purple-700 text-white"
+          >
+            {isGeneratingAssets ? (
+              <>
+                <div className="w-4 h-4 mr-2 border border-white border-t-transparent rounded-full animate-spin" />
+                Generating...
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-4 h-4 mr-2" />
+                Generate Assets
+              </>
+            )}
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => setIsWorkspaceOpen(true)}
+            className="border-purple-300 text-purple-700 hover:bg-purple-50"
+          >
+            <Archive className="w-4 h-4 mr-2" />
+            Open Workspace
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            size="sm"
+            className="border-yellow-400 text-yellow-700 hover:bg-yellow-50"
+          >
+            <Save className="w-4 h-4 mr-2" />
+            Save Flow
+          </Button>
+        </div>
+      </div>
+
+      {/* Workspace Drawer */}
+      <WorkspaceDrawer
+        isOpen={isWorkspaceOpen}
+        onClose={() => {
+          setIsWorkspaceOpen(false);
+          setPendingAssignment(null);
+        }}
+        assets={generatedAssets}
+        onAssignAsset={handleAssignAsset}
+        onRegenerateAsset={handleRegenerateAsset}
+        onRegenerateAll={handleRegenerateAll}
+        isGenerating={isGeneratingAssets}
+        onGenerateAssets={handleGenerateAssets}
+        pendingAssignment={pendingAssignment}
+      />
     </div>
   );
 }
