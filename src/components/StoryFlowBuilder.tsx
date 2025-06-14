@@ -1,3 +1,4 @@
+
 import { useCallback, useState } from 'react';
 import {
   ReactFlow,
@@ -16,6 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus, Save, ArrowLeft, ArrowRight } from 'lucide-react';
 import { StoryNode } from './StoryNode';
+import { useToast } from '@/hooks/use-toast';
 
 interface StoryNodeData {
   title: string;
@@ -52,13 +54,28 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [nodeIdCounter, setNodeIdCounter] = useState(2);
+  const { toast } = useToast();
 
   const onConnect = useCallback(
     (params: Edge | Connection) => setEdges((eds) => addEdge(params, eds)),
     [setEdges]
   );
 
+  const getSceneCount = () => {
+    return nodes.filter(node => node.data.nodeType === 'Scene').length;
+  };
+
   const addNewNode = (nodeType: string) => {
+    // Check scene limit
+    if (nodeType === 'Scene' && getSceneCount() >= 5) {
+      toast({
+        title: "Scene Limit Reached",
+        description: "You can only add up to 5 scenes per ad.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     const newNode: Node<StoryNodeData> = {
       id: nodeIdCounter.toString(),
       type: 'storyNode',
@@ -73,6 +90,9 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
     setNodes((nds) => [...nds, newNode]);
     setNodeIdCounter(nodeIdCounter + 1);
   };
+
+  const sceneCount = getSceneCount();
+  const isSceneLimitReached = sceneCount >= 5;
 
   return (
     <div className="space-y-6 animate-fade-in-up">
@@ -97,13 +117,26 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
       {/* Toolbar */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Add Story Elements</CardTitle>
+          <CardTitle className="text-lg flex items-center justify-between">
+            Add Story Elements
+            <div className="text-sm font-normal text-gray-600">
+              Scenes: {sceneCount}/5
+            </div>
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-3">
-            <Button onClick={() => addNewNode('Scene')} className="bg-blue-500 hover:bg-blue-600 text-white">
+            <Button 
+              onClick={() => addNewNode('Scene')} 
+              className={`${
+                isSceneLimitReached 
+                  ? 'bg-gray-300 hover:bg-gray-300 text-gray-500 cursor-not-allowed' 
+                  : 'bg-blue-500 hover:bg-blue-600 text-white'
+              }`}
+              disabled={isSceneLimitReached}
+            >
               <Plus className="w-4 h-4 mr-2" />
-              Scene
+              Scene {isSceneLimitReached && '(Max 5)'}
             </Button>
             <Button onClick={() => addNewNode('Option Point')} className="bg-yellow-400 hover:bg-yellow-500 text-black">
               <Plus className="w-4 h-4 mr-2" />
@@ -122,6 +155,14 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
               Save Flow
             </Button>
           </div>
+          
+          {isSceneLimitReached && (
+            <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+              <p className="text-sm text-orange-700">
+                ⚠️ You've reached the maximum of 5 scenes per ad. Remove a scene to add a new one.
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
