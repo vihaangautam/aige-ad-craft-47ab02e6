@@ -92,7 +92,7 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
   };
 
   const onConnect = useCallback(
-    (params: Edge | Connection) => {
+    (params: Connection) => {
       if (validateConnection(params)) {
         setEdges((eds) => addEdge(params, eds));
       }
