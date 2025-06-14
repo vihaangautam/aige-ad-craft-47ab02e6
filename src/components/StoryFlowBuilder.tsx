@@ -15,14 +15,16 @@ import {
 import '@xyflow/react/dist/style.css';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Save, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Plus, Save, ArrowLeft, ArrowRight, Sparkles } from 'lucide-react';
 import { StoryNode } from './StoryNode';
+import { WorkspaceModal, GeneratedAsset } from './WorkspaceModal';
 import { useToast } from '@/hooks/use-toast';
 
 interface StoryNodeData {
   title: string;
   description: string;
   nodeType: 'Scene' | 'Option Point' | 'Game' | 'AR Filter' | string;
+  onImportFromWorkspace?: (nodeId: string, option: 'A' | 'B') => void;
   [key: string]: any;
 }
 
@@ -54,6 +56,10 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [nodeIdCounter, setNodeIdCounter] = useState(2);
+  const [isWorkspaceOpen, setIsWorkspaceOpen] = useState(false);
+  const [isGeneratingAssets, setIsGeneratingAssets] = useState(false);
+  const [generatedAssets, setGeneratedAssets] = useState<GeneratedAsset[]>([]);
+  const [pendingAssignment, setPendingAssignment] = useState<{ nodeId: string; option: 'A' | 'B' } | null>(null);
   const { toast } = useToast();
 
   const onConnect = useCallback(
@@ -84,12 +90,157 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
         title: `New ${nodeType}`,
         description: `Description for ${nodeType.toLowerCase()}`,
         nodeType,
+        onImportFromWorkspace: handleImportFromWorkspace,
       },
     };
 
     setNodes((nds) => [...nds, newNode]);
     setNodeIdCounter(nodeIdCounter + 1);
   };
+
+  const handleImportFromWorkspace = (nodeId: string, option: 'A' | 'B') => {
+    setPendingAssignment({ nodeId, option });
+    setIsWorkspaceOpen(true);
+  };
+
+  const handleGenerateAssets = async () => {
+    const sceneNodes = nodes.filter(node => node.data.nodeType === 'Scene');
+    
+    if (sceneNodes.length === 0) {
+      toast({
+        title: "No Scenes Found",
+        description: "Add at least one scene before generating assets.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsGeneratingAssets(true);
+    
+    // Create generating assets
+    const newAssets: GeneratedAsset[] = sceneNodes.map(node => ({
+      id: `asset-${node.id}-${Date.now()}`,
+      sceneTitle: node.data.title,
+      sceneId: node.id,
+      filename: `${node.data.title.replace(/\s+/g, '_')}_AI_Generated.mp4`,
+      thumbnail: '',
+      videoUrl: '',
+      generatedAt: new Date(),
+      status: 'generating' as const,
+    }));
+
+    setGeneratedAssets(prev => [...prev, ...newAssets]);
+
+    // Simulate AI generation
+    for (let i = 0; i < newAssets.length; i++) {
+      await new Promise(resolve => setTimeout(resolve, 2000 + i * 1000));
+      
+      setGeneratedAssets(prev => prev.map(asset => 
+        asset.id === newAssets[i].id 
+          ? {
+              ...asset,
+              status: 'completed' as const,
+              thumbnail: `https://images.unsplash.com/photo-1611077541120-4e12cffbcec7?w=400&h=300&fit=crop&q=80&auto=format&sig=${Math.random()}`,
+              videoUrl: `https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4`,
+            }
+          : asset
+      ));
+    }
+
+    setIsGeneratingAssets(false);
+    
+    toast({
+      title: "Assets Generated",
+      description: `Successfully generated ${newAssets.length} video assets.`,
+    });
+  };
+
+  const handleAssignAsset = (assetId: string, nodeId: string, option: 'A' | 'B') => {
+    const asset = generatedAssets.find(a => a.id === assetId);
+    if (!asset) return;
+
+    // Update the node with the assigned asset
+    setNodes(nds => nds.map(node => {
+      if (node.id === nodeId) {
+        const optionKey = option === 'A' ? 'optionA' : 'optionB';
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            [optionKey]: {
+              type: 'workspace-import',
+              filename: asset.filename,
+              thumbnail: asset.thumbnail,
+              assetId: asset.id,
+            }
+          }
+        };
+      }
+      return node;
+    }));
+
+    toast({
+      title: "Asset Assigned",
+      description: `${asset.filename} assigned to Option ${option}`,
+    });
+  };
+
+  const handleRegenerateAsset = async (assetId: string) => {
+    setGeneratedAssets(prev => prev.map(asset => 
+      asset.id === assetId 
+        ? { ...asset, status: 'generating' as const }
+        : asset
+    ));
+
+    // Simulate regeneration
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    
+    setGeneratedAssets(prev => prev.map(asset => 
+      asset.id === assetId 
+        ? {
+            ...asset,
+            status: 'completed' as const,
+            thumbnail: `https://images.unsplash.com/photo-1611077541120-4e12cffbcec7?w=400&h=300&fit=crop&q=80&auto=format&sig=${Math.random()}`,
+            generatedAt: new Date(),
+          }
+        : asset
+    ));
+  };
+
+  const handleRegenerateAll = async () => {
+    const completedAssets = generatedAssets.filter(asset => asset.status === 'completed');
+    
+    setGeneratedAssets(prev => prev.map(asset => 
+      asset.status === 'completed' 
+        ? { ...asset, status: 'generating' as const }
+        : asset
+    ));
+
+    // Simulate regeneration for all
+    for (let i = 0; i < completedAssets.length; i++) {
+      await new Promise(resolve => setTimeout(resolve, 2000 + i * 500));
+      
+      setGeneratedAssets(prev => prev.map(asset => 
+        asset.id === completedAssets[i].id 
+          ? {
+              ...asset,
+              status: 'completed' as const,
+              thumbnail: `https://images.unsplash.com/photo-1611077541120-4e12cffbcec7?w=400&h=300&fit=crop&q=80&auto=format&sig=${Math.random()}`,
+              generatedAt: new Date(),
+            }
+          : asset
+      ));
+    }
+  };
+
+  // Update existing nodes to include the onImportFromWorkspace callback
+  const nodesWithCallbacks = nodes.map(node => ({
+    ...node,
+    data: {
+      ...node.data,
+      onImportFromWorkspace: handleImportFromWorkspace,
+    }
+  }));
 
   const sceneCount = getSceneCount();
   const isSceneLimitReached = sceneCount >= 5;
@@ -150,10 +301,40 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
               <Plus className="w-4 h-4 mr-2" />
               AR Filter
             </Button>
-            <Button variant="outline" className="ml-auto border-yellow-400 text-yellow-700 hover:bg-yellow-50">
-              <Save className="w-4 h-4 mr-2" />
-              Save Flow
-            </Button>
+            
+            {/* AI Generation Buttons */}
+            <div className="ml-auto flex gap-2">
+              <Button 
+                onClick={handleGenerateAssets}
+                disabled={isGeneratingAssets || sceneCount === 0}
+                className="bg-purple-600 hover:bg-purple-700 text-white"
+              >
+                {isGeneratingAssets ? (
+                  <>
+                    <div className="w-4 h-4 mr-2 border border-white border-t-transparent rounded-full animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Generate Assets
+                  </>
+                )}
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                onClick={() => setIsWorkspaceOpen(true)}
+                className="border-purple-300 text-purple-700 hover:bg-purple-50"
+              >
+                Open Workspace
+              </Button>
+              
+              <Button variant="outline" className="border-yellow-400 text-yellow-700 hover:bg-yellow-50">
+                <Save className="w-4 h-4 mr-2" />
+                Save Flow
+              </Button>
+            </div>
           </div>
           
           {isSceneLimitReached && (
@@ -170,7 +351,7 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
       <Card className="h-[600px]">
         <CardContent className="p-0 h-full">
           <ReactFlow
-            nodes={nodes}
+            nodes={nodesWithCallbacks}
             edges={edges}
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
@@ -185,6 +366,20 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
           </ReactFlow>
         </CardContent>
       </Card>
+
+      {/* Workspace Modal */}
+      <WorkspaceModal
+        isOpen={isWorkspaceOpen}
+        onClose={() => {
+          setIsWorkspaceOpen(false);
+          setPendingAssignment(null);
+        }}
+        assets={generatedAssets}
+        onAssignAsset={handleAssignAsset}
+        onRegenerateAsset={handleRegenerateAsset}
+        onRegenerateAll={handleRegenerateAll}
+        isGenerating={isGeneratingAssets}
+      />
     </div>
   );
 }

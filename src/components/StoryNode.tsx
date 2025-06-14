@@ -4,14 +4,15 @@ import { Handle, Position, NodeProps, Node } from '@xyflow/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Upload, Sparkles, Play, FileVideo } from 'lucide-react';
+import { Plus, Upload, Archive, Play, FileVideo } from 'lucide-react';
 import { VideoPreviewModal } from './VideoPreviewModal';
 
 interface MediaOption {
-  type: 'upload' | 'ai-generated';
+  type: 'upload' | 'workspace-import';
   file?: File;
   thumbnail?: string;
   filename?: string;
+  assetId?: string;
 }
 
 interface StoryNodeData {
@@ -20,6 +21,7 @@ interface StoryNodeData {
   nodeType: 'Scene' | 'Option Point' | 'Game' | 'AR Filter' | string;
   optionA?: MediaOption;
   optionB?: MediaOption;
+  onImportFromWorkspace?: (nodeId: string, option: 'A' | 'B') => void;
   [key: string]: any;
 }
 
@@ -31,7 +33,6 @@ export const StoryNode = memo(function StoryNodeComponent({
 }: NodeProps<StoryFlowNode>) {
   const [optionA, setOptionA] = useState<MediaOption | undefined>(data.optionA);
   const [optionB, setOptionB] = useState<MediaOption | undefined>(data.optionB);
-  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [previewVideo, setPreviewVideo] = useState<string | null>(null);
 
   const getNodeColor = (type: string) => {
@@ -56,7 +57,7 @@ export const StoryNode = memo(function StoryNodeComponent({
 
   const handleUploadOptionA = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file && file.type.startsWith('video/')) {
+    if (file && (file.type.startsWith('video/') || file.type.startsWith('audio/'))) {
       const newOption: MediaOption = {
         type: 'upload',
         file,
@@ -67,20 +68,10 @@ export const StoryNode = memo(function StoryNodeComponent({
     }
   };
 
-  const handleGenerateOptionB = async () => {
-    setIsGeneratingAI(true);
-    
-    // Simulate AI generation delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    const mockOption: MediaOption = {
-      type: 'ai-generated',
-      filename: 'AI_Generated_Video.mp4',
-      thumbnail: 'https://images.unsplash.com/photo-1611077541120-4e12cffbcec7?w=400&h=300&fit=crop'
-    };
-    
-    setOptionB(mockOption);
-    setIsGeneratingAI(false);
+  const handleImportFromWorkspace = (option: 'A' | 'B') => {
+    if (data.onImportFromWorkspace) {
+      data.onImportFromWorkspace(id, option);
+    }
   };
 
   const handlePreviewVideo = (option: MediaOption) => {
@@ -139,7 +130,7 @@ export const StoryNode = memo(function StoryNodeComponent({
                   <div>
                     <input
                       type="file"
-                      accept="video/*"
+                      accept="video/*,audio/*"
                       onChange={handleUploadOptionA}
                       className="hidden"
                       id={`upload-a-${id}`}
@@ -156,13 +147,13 @@ export const StoryNode = memo(function StoryNodeComponent({
                 )}
               </div>
 
-              {/* Option B - AI Generate */}
+              {/* Option B - Import from Workspace */}
               <div className="border border-gray-200 rounded-lg p-3 bg-white">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium text-gray-700">Option B</span>
                   {optionB && (
                     <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700">
-                      AI Generated
+                      From Workspace
                     </Badge>
                   )}
                 </div>
@@ -185,20 +176,10 @@ export const StoryNode = memo(function StoryNodeComponent({
                     size="sm" 
                     variant="outline" 
                     className="w-full border-purple-300 text-purple-700 hover:bg-purple-50"
-                    onClick={handleGenerateOptionB}
-                    disabled={isGeneratingAI}
+                    onClick={() => handleImportFromWorkspace('B')}
                   >
-                    {isGeneratingAI ? (
-                      <>
-                        <div className="w-3 h-3 mr-1 border border-purple-300 border-t-transparent rounded-full animate-spin" />
-                        Generating...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="w-3 h-3 mr-1" />
-                        Generate with AI
-                      </>
-                    )}
+                    <Archive className="w-3 h-3 mr-1" />
+                    Import from Workspace
                   </Button>
                 )}
               </div>
