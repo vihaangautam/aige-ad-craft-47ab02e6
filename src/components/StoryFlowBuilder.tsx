@@ -1,4 +1,3 @@
-
 import { useCallback, useState } from 'react';
 import {
   ReactFlow,
@@ -15,9 +14,10 @@ import {
 import '@xyflow/react/dist/style.css';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Save, ArrowLeft, ArrowRight, Sparkles } from 'lucide-react';
+import { Plus, Save, ArrowLeft, ArrowRight, Sparkles, Archive } from 'lucide-react';
 import { StoryNode } from './StoryNode';
-import { WorkspaceModal, GeneratedAsset } from './WorkspaceModal';
+import { WorkspaceDrawer } from './WorkspaceDrawer';
+import { GeneratedAsset } from './WorkspaceModal';
 import { useToast } from '@/hooks/use-toast';
 
 interface StoryNodeData {
@@ -72,7 +72,6 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
   };
 
   const addNewNode = (nodeType: string) => {
-    // Check scene limit
     if (nodeType === 'Scene' && getSceneCount() >= 5) {
       toast({
         title: "Scene Limit Reached",
@@ -85,7 +84,7 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
     const newNode: Node<StoryNodeData> = {
       id: nodeIdCounter.toString(),
       type: 'storyNode',
-      position: { x: Math.random() * 400, y: Math.random() * 400 },
+      position: { x: 100 + Math.random() * 300, y: 100 + Math.random() * 300 },
       data: {
         title: `New ${nodeType}`,
         description: `Description for ${nodeType.toLowerCase()}`,
@@ -246,40 +245,38 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
   const isSceneLimitReached = sceneCount >= 5;
 
   return (
-    <div className="space-y-6 animate-fade-in-up">
+    <div className="h-screen flex flex-col animate-fade-in-up">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between p-6 border-b bg-white">
         <div>
           <h1 className="text-3xl font-bold text-black mb-2">Story Flow Builder</h1>
           <p className="text-gray-600">Design interactive ad experiences with branching narratives</p>
         </div>
-        <div className="flex gap-3">
-          <Button variant="outline" onClick={onBack}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
-          <Button className="bg-yellow-400 hover:bg-yellow-300 text-black font-semibold" onClick={onNext}>
-            Next
-            <ArrowRight className="w-4 h-4 ml-2" />
-          </Button>
+        <div className="flex items-center gap-4">
+          <div className="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
+            Scenes: {sceneCount}/5
+          </div>
+          <div className="flex gap-3">
+            <Button variant="outline" onClick={onBack}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back
+            </Button>
+            <Button className="bg-yellow-400 hover:bg-yellow-300 text-black font-semibold" onClick={onNext}>
+              Next
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          </div>
         </div>
       </div>
 
-      {/* Toolbar */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center justify-between">
-            Add Story Elements
-            <div className="text-sm font-normal text-gray-600">
-              Scenes: {sceneCount}/5
-            </div>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-3">
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left Sidebar - Story Blocks */}
+        <div className="w-64 bg-gray-50 border-r border-gray-200 p-4 overflow-y-auto">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Story Blocks</h3>
+          <div className="space-y-3">
             <Button 
               onClick={() => addNewNode('Scene')} 
-              className={`${
+              className={`w-full justify-start ${
                 isSceneLimitReached 
                   ? 'bg-gray-300 hover:bg-gray-300 text-gray-500 cursor-not-allowed' 
                   : 'bg-blue-500 hover:bg-blue-600 text-white'
@@ -289,25 +286,45 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
               <Plus className="w-4 h-4 mr-2" />
               Scene {isSceneLimitReached && '(Max 5)'}
             </Button>
-            <Button onClick={() => addNewNode('Option Point')} className="bg-yellow-400 hover:bg-yellow-500 text-black">
+            <Button 
+              onClick={() => addNewNode('Option Point')} 
+              className="w-full justify-start bg-yellow-400 hover:bg-yellow-500 text-black"
+            >
               <Plus className="w-4 h-4 mr-2" />
               Choice Point
             </Button>
-            <Button onClick={() => addNewNode('Game')} className="bg-green-500 hover:bg-green-600 text-white">
+            <Button 
+              onClick={() => addNewNode('Game')} 
+              className="w-full justify-start bg-green-500 hover:bg-green-600 text-white"
+            >
               <Plus className="w-4 h-4 mr-2" />
               Mini Game
             </Button>
-            <Button onClick={() => addNewNode('AR Filter')} className="bg-purple-500 hover:bg-purple-600 text-white">
+            <Button 
+              onClick={() => addNewNode('AR Filter')} 
+              className="w-full justify-start bg-purple-500 hover:bg-purple-600 text-white"
+            >
               <Plus className="w-4 h-4 mr-2" />
               AR Filter
             </Button>
-            
-            {/* AI Generation Buttons */}
-            <div className="ml-auto flex gap-2">
+          </div>
+
+          {isSceneLimitReached && (
+            <div className="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+              <p className="text-sm text-orange-700">
+                ⚠️ Maximum of 5 scenes reached
+              </p>
+            </div>
+          )}
+
+          <div className="mt-8 pt-4 border-t border-gray-200">
+            <h4 className="text-sm font-medium text-gray-700 mb-3">Project Actions</h4>
+            <div className="space-y-2">
               <Button 
                 onClick={handleGenerateAssets}
                 disabled={isGeneratingAssets || sceneCount === 0}
-                className="bg-purple-600 hover:bg-purple-700 text-white"
+                className="w-full justify-start bg-purple-600 hover:bg-purple-700 text-white text-sm"
+                size="sm"
               >
                 {isGeneratingAssets ? (
                   <>
@@ -324,32 +341,28 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
               
               <Button 
                 variant="outline" 
+                size="sm"
                 onClick={() => setIsWorkspaceOpen(true)}
-                className="border-purple-300 text-purple-700 hover:bg-purple-50"
+                className="w-full justify-start border-purple-300 text-purple-700 hover:bg-purple-50"
               >
+                <Archive className="w-4 h-4 mr-2" />
                 Open Workspace
               </Button>
               
-              <Button variant="outline" className="border-yellow-400 text-yellow-700 hover:bg-yellow-50">
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="w-full justify-start border-yellow-400 text-yellow-700 hover:bg-yellow-50"
+              >
                 <Save className="w-4 h-4 mr-2" />
                 Save Flow
               </Button>
             </div>
           </div>
-          
-          {isSceneLimitReached && (
-            <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
-              <p className="text-sm text-orange-700">
-                ⚠️ You've reached the maximum of 5 scenes per ad. Remove a scene to add a new one.
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Flow Canvas */}
-      <Card className="h-[600px]">
-        <CardContent className="p-0 h-full">
+        {/* Main Canvas */}
+        <div className="flex-1 relative">
           <ReactFlow
             nodes={nodesWithCallbacks}
             edges={edges}
@@ -359,27 +372,30 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
             nodeTypes={nodeTypes}
             fitView
             className="bg-gray-50"
+            fitViewOptions={{ padding: 0.2 }}
           >
             <Controls />
             <MiniMap />
             <Background color="#aaa" gap={16} />
           </ReactFlow>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Workspace Modal */}
-      <WorkspaceModal
-        isOpen={isWorkspaceOpen}
-        onClose={() => {
-          setIsWorkspaceOpen(false);
-          setPendingAssignment(null);
-        }}
-        assets={generatedAssets}
-        onAssignAsset={handleAssignAsset}
-        onRegenerateAsset={handleRegenerateAsset}
-        onRegenerateAll={handleRegenerateAll}
-        isGenerating={isGeneratingAssets}
-      />
+        {/* Workspace Drawer */}
+        <WorkspaceDrawer
+          isOpen={isWorkspaceOpen}
+          onClose={() => {
+            setIsWorkspaceOpen(false);
+            setPendingAssignment(null);
+          }}
+          assets={generatedAssets}
+          onAssignAsset={handleAssignAsset}
+          onRegenerateAsset={handleRegenerateAsset}
+          onRegenerateAll={handleRegenerateAll}
+          isGenerating={isGeneratingAssets}
+          onGenerateAssets={handleGenerateAssets}
+          pendingAssignment={pendingAssignment}
+        />
+      </div>
     </div>
   );
 }

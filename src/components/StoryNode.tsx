@@ -1,10 +1,9 @@
-
 import { memo, useState } from 'react';
 import { Handle, Position, NodeProps, Node } from '@xyflow/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Upload, Archive, Play, FileVideo } from 'lucide-react';
+import { Upload, Archive, Play, X } from 'lucide-react';
 import { VideoPreviewModal } from './VideoPreviewModal';
 
 interface MediaOption {
@@ -34,6 +33,7 @@ export const StoryNode = memo(function StoryNodeComponent({
   const [optionA, setOptionA] = useState<MediaOption | undefined>(data.optionA);
   const [optionB, setOptionB] = useState<MediaOption | undefined>(data.optionB);
   const [previewVideo, setPreviewVideo] = useState<string | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
 
   const getNodeColor = (type: string) => {
     switch (type) {
@@ -77,6 +77,42 @@ export const StoryNode = memo(function StoryNodeComponent({
   const handlePreviewVideo = (option: MediaOption) => {
     if (option.thumbnail) {
       setPreviewVideo(option.thumbnail);
+    }
+  };
+
+  const handleRemoveOptionB = () => {
+    setOptionB(undefined);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    
+    try {
+      const data = JSON.parse(e.dataTransfer.getData('application/json'));
+      if (data.type === 'workspace-asset') {
+        // Simulate asset assignment (in real implementation, this would call a parent function)
+        const newOption: MediaOption = {
+          type: 'workspace-import',
+          filename: `Asset_${data.assetId}.mp4`,
+          thumbnail: `https://images.unsplash.com/photo-1611077541120-4e12cffbcec7?w=400&h=300&fit=crop&q=80&auto=format&sig=${Math.random()}`,
+          assetId: data.assetId,
+        };
+        setOptionB(newOption);
+      }
+    } catch (error) {
+      console.error('Error handling drop:', error);
     }
   };
 
@@ -148,13 +184,30 @@ export const StoryNode = memo(function StoryNodeComponent({
               </div>
 
               {/* Option B - Import from Workspace */}
-              <div className="border border-gray-200 rounded-lg p-3 bg-white">
+              <div 
+                className={`border rounded-lg p-3 bg-white transition-colors ${
+                  isDragOver ? 'border-purple-400 bg-purple-50' : 'border-gray-200'
+                }`}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+              >
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium text-gray-700">Option B</span>
                   {optionB && (
-                    <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700">
-                      From Workspace
-                    </Badge>
+                    <div className="flex items-center gap-1">
+                      <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700">
+                        From Workspace
+                      </Badge>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 w-6 p-0 hover:bg-red-100"
+                        onClick={handleRemoveOptionB}
+                      >
+                        <X className="w-3 h-3 text-red-500" />
+                      </Button>
+                    </div>
                   )}
                 </div>
                 
@@ -172,15 +225,22 @@ export const StoryNode = memo(function StoryNodeComponent({
                     </div>
                   </div>
                 ) : (
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="w-full border-purple-300 text-purple-700 hover:bg-purple-50"
-                    onClick={() => handleImportFromWorkspace('B')}
-                  >
-                    <Archive className="w-3 h-3 mr-1" />
-                    Import from Workspace
-                  </Button>
+                  <div>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="w-full border-purple-300 text-purple-700 hover:bg-purple-50"
+                      onClick={() => handleImportFromWorkspace('B')}
+                    >
+                      <Archive className="w-3 h-3 mr-1" />
+                      Import from Workspace
+                    </Button>
+                    {isDragOver && (
+                      <p className="text-xs text-purple-600 mt-1 text-center">
+                        Drop asset here to assign
+                      </p>
+                    )}
+                  </div>
                 )}
               </div>
             </div>

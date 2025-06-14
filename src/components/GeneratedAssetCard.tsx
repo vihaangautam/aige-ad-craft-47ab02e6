@@ -2,7 +2,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Play, RefreshCw, Download, Check } from 'lucide-react';
+import { Play, RefreshCw, Check, GripVertical } from 'lucide-react';
 import { GeneratedAsset } from './WorkspaceModal';
 
 interface GeneratedAssetCardProps {
@@ -12,6 +12,7 @@ interface GeneratedAssetCardProps {
   onAssign: () => void;
   onRegenerate: () => void;
   showAssignButton: boolean;
+  isDraggable?: boolean;
 }
 
 export function GeneratedAssetCard({ 
@@ -20,16 +21,37 @@ export function GeneratedAssetCard({
   onSelect, 
   onAssign, 
   onRegenerate,
-  showAssignButton 
+  showAssignButton,
+  isDraggable = false
 }: GeneratedAssetCardProps) {
+  const handleDragStart = (e: React.DragEvent) => {
+    if (isDraggable) {
+      e.dataTransfer.setData('application/json', JSON.stringify({
+        assetId: asset.id,
+        type: 'workspace-asset'
+      }));
+      e.dataTransfer.effectAllowed = 'copy';
+    }
+  };
+
   return (
     <Card 
       className={`cursor-pointer transition-all duration-200 hover:shadow-md ${
         isSelected ? 'ring-2 ring-purple-400 border-purple-400' : 'border-gray-200'
-      }`}
+      } ${isDraggable ? 'cursor-grab active:cursor-grabbing' : ''}`}
       onClick={onSelect}
+      draggable={isDraggable}
+      onDragStart={handleDragStart}
     >
       <CardContent className="p-3">
+        {/* Drag Handle */}
+        {isDraggable && (
+          <div className="flex items-center mb-2">
+            <GripVertical className="w-4 h-4 text-gray-400 mr-2" />
+            <span className="text-xs text-gray-500">Drag to assign</span>
+          </div>
+        )}
+
         {/* Thumbnail */}
         <div className="aspect-video bg-gray-100 rounded-md mb-3 relative overflow-hidden">
           <img 
@@ -38,7 +60,7 @@ export function GeneratedAssetCard({
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-            <Play className="w-8 h-8 text-white" />
+            <Play className="w-6 h-6 text-white" />
           </div>
         </div>
 
