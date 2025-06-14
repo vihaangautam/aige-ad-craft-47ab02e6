@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Upload, Archive, Play, X } from 'lucide-react';
+import { trash } from 'lucide-react';
 import { VideoPreviewModal } from './VideoPreviewModal';
 
 interface MediaOption {
@@ -21,6 +22,7 @@ interface StoryNodeData {
   optionA?: MediaOption;
   optionB?: MediaOption;
   onImportFromWorkspace?: (nodeId: string, option: 'A' | 'B') => void;
+  onDelete?: (nodeId: string) => void;
   [key: string]: any;
 }
 
@@ -52,6 +54,13 @@ export const StoryNode = memo(function StoryNodeComponent({
       case 'Game': return '🎮';
       case 'AR Filter': return '✨';
       default: return '📦';
+    }
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (data.onDelete) {
+      data.onDelete(id);
     }
   };
 
@@ -118,11 +127,20 @@ export const StoryNode = memo(function StoryNodeComponent({
 
   return (
     <>
-      <Card className={`w-80 ${getNodeColor(data.nodeType)} shadow-md`}>
+      <Card className={`w-80 ${getNodeColor(data.nodeType)} shadow-md relative`}>
         <Handle type="target" position={Position.Top} className="w-3 h-3 !bg-yellow-400 !border-2 !border-white" />
 
+        {/* Delete Button */}
+        <button
+          onClick={handleDelete}
+          className="absolute top-2 right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs z-10 opacity-70 hover:opacity-100 transition-opacity"
+          title="Delete node"
+        >
+          <X className="w-3 h-3" />
+        </button>
+
         <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between pr-8">
             <CardTitle className="text-base font-semibold text-black flex items-center gap-2">
               <span className="text-lg">{getNodeIcon(data.nodeType)}</span>
               {data.title}

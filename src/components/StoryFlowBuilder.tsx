@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import {
   ReactFlow,
   MiniMap,
@@ -62,6 +62,20 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
   const [pendingAssignment, setPendingAssignment] = useState<{ nodeId: string; option: 'A' | 'B' } | null>(null);
   const { toast } = useToast();
 
+  // Center the canvas on first load
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      // This will center the canvas properly on first render
+      const fitViewOptions = { 
+        padding: 0.2, 
+        includeHiddenNodes: false,
+        duration: 500 
+      };
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   const validateConnection = (connection: Connection): boolean => {
     const sourceNode = nodes.find(node => node.id === connection.source);
     if (!sourceNode) return false;
@@ -82,7 +96,7 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
     if (sourceNode.data.nodeType === 'Option Point' && existingEdgesFromSource.length >= 2) {
       toast({
         title: "Connection Limit Reached",
-        description: "Choice points can only have two outgoing connections (Option A and Option B).",
+        description: "You can only add two options from a choice point.",
         variant: "destructive"
       });
       return false;
@@ -99,6 +113,34 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
     },
     [setEdges, nodes, edges, toast]
   );
+
+  // Handle node deletion
+  const handleDeleteNode = useCallback((nodeId: string) => {
+    setNodes((nds) => nds.filter(node => node.id !== nodeId));
+    setEdges((eds) => eds.filter(edge => edge.source !== nodeId && edge.target !== nodeId));
+    
+    toast({
+      title: "Node Deleted",
+      description: "Node and all its connections have been removed.",
+    });
+  }, [setNodes, setEdges, toast]);
+
+  // Handle keyboard events for deletion
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Backspace' || event.key === 'Delete') {
+        const selectedNodes = nodes.filter(node => node.selected);
+        if (selectedNodes.length > 0) {
+          selectedNodes.forEach(node => {
+            handleDeleteNode(node.id);
+          });
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [nodes, handleDeleteNode]);
 
   const getSceneCount = () => {
     return nodes.filter(node => node.data.nodeType === 'Scene').length;
@@ -123,6 +165,7 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
         description: `Description for ${nodeType.toLowerCase()}`,
         nodeType,
         onImportFromWorkspace: handleImportFromWorkspace,
+        onDelete: handleDeleteNode,
       },
     };
 
@@ -265,12 +308,13 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
     }
   };
 
-  // Update existing nodes to include the onImportFromWorkspace callback
+  // Update existing nodes to include the callbacks
   const nodesWithCallbacks = nodes.map(node => ({
     ...node,
     data: {
       ...node.data,
       onImportFromWorkspace: handleImportFromWorkspace,
+      onDelete: handleDeleteNode,
     }
   }));
 
@@ -356,16 +400,7 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
       </div>
 
       {/* Main Canvas */}
-      <div className="flex-1 relative">
-        {nodes.length === 1 && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-            <div className="text-center text-gray-500">
-              <div className="text-lg font-medium mb-2">Start building your story</div>
-              <div className="text-sm">Add scenes, choice points, and interactive elements above</div>
-            </div>
-          </div>
-        )}
-        
+      <div className="flex-1 relative">        
         <ReactFlow
           nodes={nodesWithCallbacks}
           edges={edges}
