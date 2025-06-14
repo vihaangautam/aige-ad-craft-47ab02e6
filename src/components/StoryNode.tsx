@@ -148,7 +148,7 @@ export const StoryNode = memo(function StoryNodeComponent({
                       <Button size="sm" variant="outline" className="w-full border-blue-300 text-blue-700 hover:bg-blue-50" asChild>
                         <span className="cursor-pointer">
                           <Upload className="w-3 h-3 mr-1" />
-                          Upload Option A
+                          Upload from Files
                         </span>
                       </Button>
                     </label>
@@ -196,7 +196,7 @@ export const StoryNode = memo(function StoryNodeComponent({
                     ) : (
                       <>
                         <Sparkles className="w-3 h-3 mr-1" />
-                        Generate Option B using AI
+                        Generate with AI
                       </>
                     )}
                   </Button>
