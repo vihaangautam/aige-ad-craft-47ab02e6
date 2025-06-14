@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Upload, Archive, Play, X } from 'lucide-react';
-import { trash } from 'lucide-react';
+import { Trash } from 'lucide-react';
 import { VideoPreviewModal } from './VideoPreviewModal';
 
 interface MediaOption {
