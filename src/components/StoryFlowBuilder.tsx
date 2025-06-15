@@ -19,6 +19,7 @@ import { StoryNode } from './StoryNode';
 import { WorkspaceDrawer } from './WorkspaceDrawer';
 import { GeneratedAsset } from './WorkspaceModal';
 import { useToast } from '@/hooks/use-toast';
+import { useAIGeneration } from '@/hooks/useAIGeneration';
 
 interface StoryNodeData {
   title: string;
@@ -57,15 +58,19 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [nodeIdCounter, setNodeIdCounter] = useState(2);
   const [isWorkspaceOpen, setIsWorkspaceOpen] = useState(false);
-  const [isGeneratingAssets, setIsGeneratingAssets] = useState(false);
-  const [generatedAssets, setGeneratedAssets] = useState<GeneratedAsset[]>([]);
   const [pendingAssignment, setPendingAssignment] = useState<{ nodeId: string; option: 'A' | 'B' } | null>(null);
   const { toast } = useToast();
 
-  // Center the canvas on first load
+  const { 
+    assets: generatedAssets, 
+    isGenerating: isGeneratingAssets, 
+    generateAssets, 
+    regenerateAsset, 
+    regenerateAll 
+  } = useAIGeneration();
+
   useEffect(() => {
     const timer = setTimeout(() => {
-      // This will center the canvas properly on first render
       const fitViewOptions = { 
         padding: 0.2, 
         includeHiddenNodes: false,
@@ -82,7 +87,6 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
 
     const existingEdgesFromSource = edges.filter(edge => edge.source === connection.source);
 
-    // Scene nodes: max 1 outgoing connection
     if (sourceNode.data.nodeType === 'Scene' && existingEdgesFromSource.length >= 1) {
       toast({
         title: "Connection Limit Reached",
@@ -92,7 +96,6 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
       return false;
     }
 
-    // Option Point nodes: max 2 outgoing connections
     if (sourceNode.data.nodeType === 'Option Point' && existingEdgesFromSource.length >= 2) {
       toast({
         title: "Connection Limit Reached",
@@ -114,7 +117,6 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
     [setEdges, nodes, edges, toast]
   );
 
-  // Handle node deletion
   const handleDeleteNode = useCallback((nodeId: string) => {
     setNodes((nds) => nds.filter(node => node.id !== nodeId));
     setEdges((eds) => eds.filter(edge => edge.source !== nodeId && edge.target !== nodeId));
@@ -125,7 +127,6 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
     });
   }, [setNodes, setEdges, toast]);
 
-  // Handle keyboard events for deletion
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Backspace' || event.key === 'Delete') {
@@ -190,51 +191,26 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
       return;
     }
 
-    setIsGeneratingAssets(true);
-    
-    // Create generating assets
-    const newAssets: GeneratedAsset[] = sceneNodes.map(node => ({
-      id: `asset-${node.id}-${Date.now()}`,
-      sceneTitle: node.data.title,
-      sceneId: node.id,
-      filename: `${node.data.title.replace(/\s+/g, '_')}_AI_Generated.mp4`,
-      thumbnail: '',
-      videoUrl: '',
-      generatedAt: new Date(),
-      status: 'generating' as const,
-    }));
+    const storyFlow = {
+      scenes: sceneNodes.map(node => ({
+        id: node.id,
+        title: node.data.title,
+        description: node.data.description,
+        nodeType: node.data.nodeType,
+      })),
+      theme: "Interactive Advertisement",
+      tone: "Engaging and Professional",
+      characters: ["Narrator"],
+      userId: "user-123"
+    };
 
-    setGeneratedAssets(prev => [...prev, ...newAssets]);
-
-    // Simulate AI generation
-    for (let i = 0; i < newAssets.length; i++) {
-      await new Promise(resolve => setTimeout(resolve, 2000 + i * 1000));
-      
-      setGeneratedAssets(prev => prev.map(asset => 
-        asset.id === newAssets[i].id 
-          ? {
-              ...asset,
-              status: 'completed' as const,
-              thumbnail: `https://images.unsplash.com/photo-1611077541120-4e12cffbcec7?w=400&h=300&fit=crop&q=80&auto=format&sig=${Math.random()}`,
-              videoUrl: `https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4`,
-            }
-          : asset
-      ));
-    }
-
-    setIsGeneratingAssets(false);
-    
-    toast({
-      title: "Assets Generated",
-      description: `Successfully generated ${newAssets.length} video assets.`,
-    });
+    await generateAssets(storyFlow);
   };
 
   const handleAssignAsset = (assetId: string, nodeId: string, option: 'A' | 'B') => {
     const asset = generatedAssets.find(a => a.id === assetId);
     if (!asset) return;
 
-    // Update the node with the assigned asset
     setNodes(nds => nds.map(node => {
       if (node.id === nodeId) {
         const optionKey = option === 'A' ? 'optionA' : 'optionB';
@@ -260,55 +236,6 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
     });
   };
 
-  const handleRegenerateAsset = async (assetId: string) => {
-    setGeneratedAssets(prev => prev.map(asset => 
-      asset.id === assetId 
-        ? { ...asset, status: 'generating' as const }
-        : asset
-    ));
-
-    // Simulate regeneration
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    
-    setGeneratedAssets(prev => prev.map(asset => 
-      asset.id === assetId 
-        ? {
-            ...asset,
-            status: 'completed' as const,
-            thumbnail: `https://images.unsplash.com/photo-1611077541120-4e12cffbcec7?w=400&h=300&fit=crop&q=80&auto=format&sig=${Math.random()}`,
-            generatedAt: new Date(),
-          }
-        : asset
-    ));
-  };
-
-  const handleRegenerateAll = async () => {
-    const completedAssets = generatedAssets.filter(asset => asset.status === 'completed');
-    
-    setGeneratedAssets(prev => prev.map(asset => 
-      asset.status === 'completed' 
-        ? { ...asset, status: 'generating' as const }
-        : asset
-    ));
-
-    // Simulate regeneration for all
-    for (let i = 0; i < completedAssets.length; i++) {
-      await new Promise(resolve => setTimeout(resolve, 2000 + i * 500));
-      
-      setGeneratedAssets(prev => prev.map(asset => 
-        asset.id === completedAssets[i].id 
-          ? {
-              ...asset,
-              status: 'completed' as const,
-              thumbnail: `https://images.unsplash.com/photo-1611077541120-4e12cffbcec7?w=400&h=300&fit=crop&q=80&auto=format&sig=${Math.random()}`,
-              generatedAt: new Date(),
-            }
-          : asset
-      ));
-    }
-  };
-
-  // Update existing nodes to include the callbacks
   const nodesWithCallbacks = nodes.map(node => ({
     ...node,
     data: {
@@ -323,7 +250,6 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
 
   return (
     <div className="h-screen flex flex-col animate-fade-in-up">
-      {/* Header */}
       <div className="flex items-center justify-between p-6 border-b bg-white">
         <div>
           <h1 className="text-3xl font-bold text-black mb-2">Story Flow Builder</h1>
@@ -346,7 +272,6 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
         </div>
       </div>
 
-      {/* Top Toolbar - Story Elements */}
       <div className="bg-gray-50 border-b border-gray-200 p-4">
         <div className="mb-2">
           <h3 className="text-sm font-medium text-gray-700">Story Elements</h3>
@@ -399,7 +324,6 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
         )}
       </div>
 
-      {/* Main Canvas */}
       <div className="flex-1 relative">        
         <ReactFlow
           nodes={nodesWithCallbacks}
@@ -418,7 +342,6 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
         </ReactFlow>
       </div>
 
-      {/* Bottom Toolbar - Project Actions */}
       <div className="bg-gray-50 border-t border-gray-200 p-4">
         <div className="mb-2">
           <h3 className="text-sm font-medium text-gray-700">Project Actions</h3>
@@ -450,7 +373,7 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
             className="border-purple-300 text-purple-700 hover:bg-purple-50"
           >
             <Archive className="w-4 h-4 mr-2" />
-            Open Workspace
+            Open Workspace ({generatedAssets.filter(a => a.status === 'completed').length})
           </Button>
           
           <Button 
@@ -464,7 +387,6 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
         </div>
       </div>
 
-      {/* Workspace Drawer */}
       <WorkspaceDrawer
         isOpen={isWorkspaceOpen}
         onClose={() => {
@@ -473,8 +395,11 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
         }}
         assets={generatedAssets}
         onAssignAsset={handleAssignAsset}
-        onRegenerateAsset={handleRegenerateAsset}
-        onRegenerateAll={handleRegenerateAll}
+        onRegenerateAsset={(assetId) => {
+          const asset = generatedAssets.find(a => a.id === assetId);
+          if (asset) regenerateAsset(asset.sceneId);
+        }}
+        onRegenerateAll={regenerateAll}
         isGenerating={isGeneratingAssets}
         onGenerateAssets={handleGenerateAssets}
         pendingAssignment={pendingAssignment}
