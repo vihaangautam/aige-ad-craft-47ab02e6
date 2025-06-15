@@ -25,24 +25,34 @@ export function useAIGeneration() {
 
   // Subscribe to real-time updates
   useEffect(() => {
-    const unsubscribe = subscribeToAssetUpdates(MOCK_USER_ID, (updatedAssets) => {
-      setAssets(updatedAssets);
-      
-      // Check if any generation completed
-      const justCompleted = updatedAssets.filter(asset => 
-        asset.status === 'completed' && 
-        !assets.find(existing => existing.id === asset.id && existing.status === 'completed')
-      );
-      
-      if (justCompleted.length > 0) {
-        toast({
-          title: "Assets Generated",
-          description: `${justCompleted.length} scene(s) completed successfully!`,
-        });
-      }
-    });
+    let unsubscribe: (() => void) | null = null;
 
-    return unsubscribe;
+    const setupSubscription = async () => {
+      unsubscribe = await subscribeToAssetUpdates(MOCK_USER_ID, (updatedAssets) => {
+        setAssets(updatedAssets);
+        
+        // Check if any generation completed
+        const justCompleted = updatedAssets.filter(asset => 
+          asset.status === 'completed' && 
+          !assets.find(existing => existing.id === asset.id && existing.status === 'completed')
+        );
+        
+        if (justCompleted.length > 0) {
+          toast({
+            title: "Assets Generated",
+            description: `${justCompleted.length} scene(s) completed successfully!`,
+          });
+        }
+      });
+    };
+
+    setupSubscription();
+
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
   }, [assets, toast]);
 
   const loadAssets = useCallback(async () => {
