@@ -60,6 +60,7 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
   const [isGeneratingAssets, setIsGeneratingAssets] = useState(false);
   const [generatedAssets, setGeneratedAssets] = useState<GeneratedAsset[]>([]);
   const [pendingAssignment, setPendingAssignment] = useState<{ nodeId: string; option: 'A' | 'B' } | null>(null);
+  const [isFlowSaved, setIsFlowSaved] = useState(false);
   const { toast } = useToast();
 
   // Center the canvas on first load
@@ -321,6 +322,65 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
   const sceneCount = getSceneCount();
   const isSceneLimitReached = sceneCount >= 5;
 
+  // New function to save flow to localStorage
+  const handleSaveFlow = () => {
+    try {
+      // Convert nodes to scene format for preview
+      const scenes = nodes
+        .filter(node => node.data.nodeType === 'Scene')
+        .map(node => ({
+          id: node.id,
+          title: node.data.title,
+          description: node.data.description || '',
+          optionA: {
+            label: node.data.optionA?.label || 'Option A',
+            videoURL: node.data.optionA?.videoURL || node.data.optionA?.thumbnail || '',
+            nextSceneId: getNextSceneId(node.id, 'A'),
+          },
+          optionB: {
+            label: node.data.optionB?.label || 'Option B', 
+            videoURL: node.data.optionB?.videoURL || node.data.optionB?.thumbnail || '',
+            nextSceneId: getNextSceneId(node.id, 'B'),
+          },
+        }));
+
+      const storyFlow = {
+        scenes,
+        openingSceneId: '1', // Default to first node, or find opening scene
+      };
+
+      localStorage.setItem('aige_current_flow', JSON.stringify(storyFlow));
+      setIsFlowSaved(true);
+      
+      toast({
+        title: "Flow Saved",
+        description: "Your story flow has been saved successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Save Failed",
+        description: "Failed to save the story flow.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Helper function to find next scene ID from connections
+  const getNextSceneId = (sourceNodeId: string, option: 'A' | 'B'): string | null => {
+    // Find edges from this node
+    const outgoingEdges = edges.filter(edge => edge.source === sourceNodeId);
+    
+    // For simplicity, assume first edge is option A, second is option B
+    // In a more complex implementation, you'd track which handle was used
+    const targetEdge = outgoingEdges[option === 'A' ? 0 : 1];
+    
+    return targetEdge?.target || null;
+  };
+
+  const handleSeePreview = () => {
+    window.location.href = '/preview';
+  };
+
   return (
     <div className="h-screen flex flex-col animate-fade-in-up">
       {/* Header */}
@@ -454,13 +514,24 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
           </Button>
           
           <Button 
-            variant="outline" 
+            onClick={handleSaveFlow}
             size="sm"
-            className="border-yellow-400 text-yellow-700 hover:bg-yellow-50"
+            className="border-yellow-400 text-yellow-700 hover:bg-yellow-50 border"
           >
             <Save className="w-4 h-4 mr-2" />
             Save Flow
           </Button>
+
+          {isFlowSaved && (
+            <Button 
+              onClick={handleSeePreview}
+              size="sm"
+              className="bg-yellow-400 hover:bg-yellow-300 text-black font-semibold"
+            >
+              See Preview
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          )}
         </div>
       </div>
 

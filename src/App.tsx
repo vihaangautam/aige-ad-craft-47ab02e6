@@ -11,6 +11,7 @@ import { ProjectsPage } from "@/pages/ProjectsPage";
 import { AnalyticsPage } from "@/pages/AnalyticsPage";
 import AuthPage from "@/pages/AuthPage";
 import { SettingsPage } from "@/pages/SettingsPage";
+import { PreviewPage } from "@/pages/PreviewPage";
 
 import {
   BrowserRouter as Router,
@@ -31,6 +32,9 @@ const App = () => {
           <Routes>
             {/* Standalone Auth Page */}
             <Route path="/auth" element={<AuthPage />} />
+
+            {/* Standalone Preview Page */}
+            <Route path="/preview" element={<PreviewPage />} />
 
             {/* All other pages inside Dashboard layout */}
             <Route
