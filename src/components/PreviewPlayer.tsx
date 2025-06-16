@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowRight, ChevronRight } from 'lucide-react';
+import { ArrowRight, ChevronRight, AlertTriangle } from 'lucide-react';
 
 // Data structure for scene nodes from localStorage
 interface SceneNode {
@@ -34,55 +34,109 @@ export function PreviewPlayer({ onExit }: PreviewPlayerProps) {
   const [storyFlow, setStoryFlow] = useState<StoryFlow | null>(null);
   const [currentSceneId, setCurrentSceneId] = useState<string | null>(null);
   const [currentScene, setCurrentScene] = useState<SceneNode | null>(null);
-  const [isVideoPlaying, setIsVideoPlaying] = useState(true);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [showChoices, setShowChoices] = useState(false);
   const [isStoryComplete, setIsStoryComplete] = useState(false);
   const [scenePath, setScenePath] = useState<string[]>([]);
-  const [selectedOption, setSelectedOption] = useState<'A' | 'B' | null>(null);
+  const [currentVideoURL, setCurrentVideoURL] = useState<string>('');
+  const [videoError, setVideoError] = useState<string | null>(null);
+  const [previousBlobURL, setPreviousBlobURL] = useState<string | null>(null);
   
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // Load story flow from localStorage on component mount
   useEffect(() => {
+    console.log('🎬 Loading story flow from localStorage...');
     const savedFlow = localStorage.getItem('aige_current_flow');
     if (savedFlow) {
       try {
         const parsedFlow: StoryFlow = JSON.parse(savedFlow);
+        console.log('✅ Story flow loaded:', parsedFlow);
         setStoryFlow(parsedFlow);
         setCurrentSceneId(parsedFlow.openingSceneId);
         setScenePath([parsedFlow.openingSceneId]);
       } catch (error) {
-        console.error('Failed to parse story flow from localStorage:', error);
+        console.error('❌ Failed to parse story flow from localStorage:', error);
       }
+    } else {
+      console.warn('⚠️ No story flow found in localStorage');
     }
   }, []);
 
-  // Update current scene when currentSceneId changes
+  // Update current scene and video when currentSceneId changes
   useEffect(() => {
     if (storyFlow && currentSceneId) {
       const scene = storyFlow.scenes.find(s => s.id === currentSceneId);
       if (scene) {
+        console.log(`🎥 Loading scene "${scene.title}" (ID: ${currentSceneId})`);
         setCurrentScene(scene);
+        
+        // Always start with optionA video for the scene
+        const videoURL = scene.optionA.videoURL;
+        console.log('🎬 Setting video URL:', videoURL);
+        
+        // Validate blob URL
+        if (videoURL && videoURL.startsWith('blob:')) {
+          console.log('✅ Valid blob URL detected');
+          setCurrentVideoURL(videoURL);
+          setVideoError(null);
+        } else {
+          console.warn('⚠️ Invalid or missing video URL:', videoURL);
+          setVideoError('Invalid video URL');
+        }
+        
+        // Clean up previous blob URL
+        if (previousBlobURL && previousBlobURL !== videoURL) {
+          console.log('🧹 Revoking previous blob URL:', previousBlobURL);
+          URL.revokeObjectURL(previousBlobURL);
+        }
+        setPreviousBlobURL(videoURL);
+        
         setIsVideoPlaying(true);
         setShowChoices(false);
-        setSelectedOption(null);
+        setVideoError(null);
+      } else {
+        console.error('❌ Scene not found:', currentSceneId);
       }
     }
   }, [storyFlow, currentSceneId]);
 
+  // Handle video load success
+  const handleVideoLoadStart = () => {
+    console.log('🎬 Video loading started');
+    setVideoError(null);
+  };
+
+  // Handle video load error
+  const handleVideoError = (e: React.SyntheticEvent<HTMLVideoElement, Event>) => {
+    console.error('❌ Video failed to load:', e);
+    setVideoError('Failed to load video');
+    setIsVideoPlaying(false);
+  };
+
   // Handle video end - show choice buttons
   const handleVideoEnd = () => {
+    console.log('🏁 Video ended, checking for next options...');
     setIsVideoPlaying(false);
     
+    if (!currentScene) return;
+    
     // Check if this scene has valid next scenes
-    const hasValidNextA = currentScene?.optionA.nextSceneId;
-    const hasValidNextB = currentScene?.optionB.nextSceneId;
+    const hasValidNextA = currentScene.optionA.nextSceneId;
+    const hasValidNextB = currentScene.optionB.nextSceneId;
+    
+    console.log('Next scene options:', {
+      optionA: hasValidNextA,
+      optionB: hasValidNextB
+    });
     
     if (!hasValidNextA && !hasValidNextB) {
       // Story is complete
+      console.log('🎉 Story complete - no more scenes');
       setIsStoryComplete(true);
     } else {
       // Show choice buttons
+      console.log('🔀 Showing choice buttons');
       setShowChoices(true);
     }
   };
@@ -91,27 +145,21 @@ export function PreviewPlayer({ onExit }: PreviewPlayerProps) {
   const handleOptionSelect = (option: 'A' | 'B') => {
     if (!currentScene) return;
     
+    console.log(`🎯 User selected option ${option}`);
+    
     const nextSceneId = option === 'A' 
       ? currentScene.optionA.nextSceneId 
       : currentScene.optionB.nextSceneId;
     
     if (nextSceneId) {
-      setSelectedOption(option);
+      console.log(`➡️ Moving to next scene: ${nextSceneId}`);
       setCurrentSceneId(nextSceneId);
       setScenePath(prev => [...prev, nextSceneId]);
     } else {
       // No next scene, story complete
+      console.log('🎉 Story complete - selected option has no next scene');
       setIsStoryComplete(true);
     }
-  };
-
-  // Get current video URL based on selected option or default to optionA
-  const getCurrentVideoURL = () => {
-    if (!currentScene) return '';
-    
-    // For the first scene or when no option is selected, use optionA
-    // For subsequent scenes, use the option that led to this scene
-    return selectedOption === 'B' ? currentScene.optionB.videoURL : currentScene.optionA.videoURL;
   };
 
   // Render breadcrumb path
@@ -173,6 +221,7 @@ export function PreviewPlayer({ onExit }: PreviewPlayerProps) {
               </Button>
               <Button 
                 onClick={() => {
+                  console.log('🔄 Restarting story from beginning');
                   setCurrentSceneId(storyFlow.openingSceneId);
                   setScenePath([storyFlow.openingSceneId]);
                   setIsStoryComplete(false);
@@ -207,17 +256,41 @@ export function PreviewPlayer({ onExit }: PreviewPlayerProps) {
       {/* Video Player */}
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="max-w-4xl w-full">
-          <video
-            ref={videoRef}
-            key={`${currentSceneId}-${selectedOption || 'default'}`}
-            className="w-full aspect-video rounded-lg shadow-lg"
-            autoPlay
-            controls
-            onEnded={handleVideoEnd}
-            src={getCurrentVideoURL()}
-          >
-            Your browser does not support the video tag.
-          </video>
+          {/* Video Error State */}
+          {videoError && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5" />
+              <span>{videoError}</span>
+            </div>
+          )}
+
+          {/* Video Player */}
+          {currentVideoURL && !videoError && (
+            <video
+              ref={videoRef}
+              key={`${currentSceneId}-video`}
+              className="w-full aspect-video rounded-lg shadow-lg"
+              autoPlay
+              controls
+              onEnded={handleVideoEnd}
+              onLoadStart={handleVideoLoadStart}
+              onError={handleVideoError}
+              src={currentVideoURL}
+            >
+              Your browser does not support the video tag.
+            </video>
+          )}
+
+          {/* Fallback message when no video */}
+          {(!currentVideoURL || videoError) && (
+            <div className="w-full aspect-video rounded-lg shadow-lg bg-gray-800 flex items-center justify-center text-white">
+              <div className="text-center">
+                <AlertTriangle className="w-12 h-12 mx-auto mb-4 text-yellow-400" />
+                <p className="text-lg font-semibold mb-2">Could not load video</p>
+                <p className="text-gray-400">The video file may be corrupted or unavailable.</p>
+              </div>
+            </div>
+          )}
 
           {/* Choice Buttons */}
           {showChoices && !isVideoPlaying && (
