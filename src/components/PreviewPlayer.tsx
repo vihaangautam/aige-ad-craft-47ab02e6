@@ -52,6 +52,18 @@ export function PreviewPlayer({ onExit }: PreviewPlayerProps) {
       try {
         const parsedFlow: StoryFlow = JSON.parse(savedFlow);
         console.log('✅ Story flow loaded:', parsedFlow);
+        console.log('🔍 Detailed scene analysis:');
+        parsedFlow.scenes.forEach((scene, index) => {
+          console.log(`Scene ${index + 1} (ID: ${scene.id}):`, {
+            title: scene.title,
+            optionA_videoURL: scene.optionA.videoURL,
+            optionA_hasVideo: !!scene.optionA.videoURL,
+            optionA_isBlobURL: scene.optionA.videoURL.startsWith('blob:'),
+            optionB_videoURL: scene.optionB.videoURL,
+            optionB_hasVideo: !!scene.optionB.videoURL,
+            optionB_isBlobURL: scene.optionB.videoURL.startsWith('blob:')
+          });
+        });
         setStoryFlow(parsedFlow);
         setCurrentSceneId(parsedFlow.openingSceneId);
         setScenePath([parsedFlow.openingSceneId]);
@@ -71,18 +83,39 @@ export function PreviewPlayer({ onExit }: PreviewPlayerProps) {
         console.log(`🎥 Loading scene "${scene.title}" (ID: ${currentSceneId})`);
         setCurrentScene(scene);
         
-        // Always start with optionA video for the scene
-        const videoURL = scene.optionA.videoURL;
-        console.log('🎬 Setting video URL:', videoURL);
+        // Try to find a valid video URL from either option
+        let videoURL = '';
+        let selectedOption = 'A';
         
-        // Validate blob URL
-        if (videoURL && videoURL.startsWith('blob:')) {
-          console.log('✅ Valid blob URL detected');
-          setCurrentVideoURL(videoURL);
-          setVideoError(null);
+        if (scene.optionA.videoURL && scene.optionA.videoURL.trim() !== '') {
+          videoURL = scene.optionA.videoURL;
+          selectedOption = 'A';
+        } else if (scene.optionB.videoURL && scene.optionB.videoURL.trim() !== '') {
+          videoURL = scene.optionB.videoURL;
+          selectedOption = 'B';
+        }
+        
+        console.log(`🎬 Selected option ${selectedOption} with video URL:`, videoURL);
+        console.log('🔍 Video URL details:', {
+          isEmpty: videoURL === '',
+          length: videoURL.length,
+          startsWithBlob: videoURL.startsWith('blob:'),
+          fullURL: videoURL
+        });
+        
+        // Validate video URL
+        if (videoURL && videoURL.trim() !== '') {
+          if (videoURL.startsWith('blob:')) {
+            console.log('✅ Valid blob URL detected');
+            setCurrentVideoURL(videoURL);
+            setVideoError(null);
+          } else {
+            console.warn('⚠️ Invalid video URL format (not a blob URL):', videoURL);
+            setVideoError('Invalid video URL format');
+          }
         } else {
-          console.warn('⚠️ Invalid or missing video URL:', videoURL);
-          setVideoError('Invalid video URL');
+          console.warn('⚠️ No valid video URL found in scene');
+          setVideoError('No video available for this scene');
         }
         
         // Clean up previous blob URL
@@ -92,9 +125,21 @@ export function PreviewPlayer({ onExit }: PreviewPlayerProps) {
         }
         setPreviousBlobURL(videoURL);
         
-        setIsVideoPlaying(true);
-        setShowChoices(false);
-        setVideoError(null);
+        if (videoURL && videoURL.trim() !== '') {
+          setIsVideoPlaying(true);
+          setShowChoices(false);
+        } else {
+          // If no video, show choices immediately or complete story
+          setIsVideoPlaying(false);
+          const hasValidNextA = scene.optionA.nextSceneId;
+          const hasValidNextB = scene.optionB.nextSceneId;
+          
+          if (!hasValidNextA && !hasValidNextB) {
+            setIsStoryComplete(true);
+          } else {
+            setShowChoices(true);
+          }
+        }
       } else {
         console.error('❌ Scene not found:', currentSceneId);
       }
@@ -110,6 +155,7 @@ export function PreviewPlayer({ onExit }: PreviewPlayerProps) {
   // Handle video load error
   const handleVideoError = (e: React.SyntheticEvent<HTMLVideoElement, Event>) => {
     console.error('❌ Video failed to load:', e);
+    console.error('❌ Video element src:', videoRef.current?.src);
     setVideoError('Failed to load video');
     setIsVideoPlaying(false);
   };
@@ -261,6 +307,18 @@ export function PreviewPlayer({ onExit }: PreviewPlayerProps) {
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 flex items-center gap-2">
               <AlertTriangle className="w-5 h-5" />
               <span>{videoError}</span>
+              <Button 
+                onClick={() => {
+                  console.log('🔄 User clicked retry, showing available options...');
+                  setVideoError(null);
+                  setShowChoices(true);
+                }}
+                variant="outline"
+                size="sm"
+                className="ml-auto"
+              >
+                Skip to Choices
+              </Button>
             </div>
           )}
 
@@ -282,12 +340,22 @@ export function PreviewPlayer({ onExit }: PreviewPlayerProps) {
           )}
 
           {/* Fallback message when no video */}
-          {(!currentVideoURL || videoError) && (
+          {(!currentVideoURL || videoError) && !showChoices && (
             <div className="w-full aspect-video rounded-lg shadow-lg bg-gray-800 flex items-center justify-center text-white">
               <div className="text-center">
                 <AlertTriangle className="w-12 h-12 mx-auto mb-4 text-yellow-400" />
                 <p className="text-lg font-semibold mb-2">Could not load video</p>
-                <p className="text-gray-400">The video file may be corrupted or unavailable.</p>
+                <p className="text-gray-400 mb-4">The video file may be corrupted or unavailable.</p>
+                <Button 
+                  onClick={() => {
+                    console.log('🔄 User clicked proceed without video');
+                    setShowChoices(true);
+                    setVideoError(null);
+                  }}
+                  className="bg-yellow-400 hover:bg-yellow-300 text-black"
+                >
+                  Proceed to Choices
+                </Button>
               </div>
             </div>
           )}
