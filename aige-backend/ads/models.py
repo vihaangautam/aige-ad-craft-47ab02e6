@@ -14,3 +14,8 @@ class Scene(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
 
+class AdConfiguration(models.Model):
+    theme_prompt = models.TextField()
+    tone = models.CharField(max_length=100)
+    characters_or_elements = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
