@@ -165,28 +165,33 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
     });
   }, [setNodes, setEdges, toast]);
 
-  // Handle choice point option updates
   const handleUpdateChoiceOption = useCallback((nodeId: string, optionIndex: number, value: string) => {
-    setNodes((nds) => nds.map(node => {
+  setNodes((nds) =>
+    nds.map((node) => {
       if (node.id === nodeId && node.type === 'choice') {
-        const newOptions = [...(node.data.options || [])];
-        // Ensure we have at least 2 options
+        const existingOptions = Array.isArray(node.data.options) ? node.data.options : [];
+
+        // Ensure at least 2 options
+        const newOptions = [...existingOptions];
         while (newOptions.length < 2) {
           newOptions.push({ label: '', nextSceneId: undefined });
         }
+
         newOptions[optionIndex] = { ...newOptions[optionIndex], label: value };
-        
+
         return {
           ...node,
           data: {
             ...node.data,
             options: newOptions,
-          }
+          },
         };
       }
       return node;
-    }));
-  }, [setNodes]);
+    })
+  );
+}, [setNodes]);
+
 
   // Handle keyboard events for deletion
   useEffect(() => {
@@ -278,16 +283,20 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
     setIsGeneratingAssets(true);
     
     // Create generating assets
-    const newAssets: GeneratedAsset[] = sceneNodes.map(node => ({
-      id: `asset-${node.id}-${Date.now()}`,
-      sceneTitle: node.data.title,
-      sceneId: node.id,
-      filename: `${node.data.title.replace(/\s+/g, '_')}_AI_Generated.mp4`,
-      thumbnail: '',
-      videoUrl: '',
-      generatedAt: new Date(),
-      status: 'generating' as const,
-    }));
+    const newAssets: GeneratedAsset[] = sceneNodes.map((node) => {
+  const title = typeof node.data.title === 'string' ? node.data.title : 'Untitled';
+
+  return {
+    id: `asset-${node.id}-${Date.now()}`,
+    sceneTitle: title,
+    sceneId: node.id,
+    filename: `${title.replace(/\s+/g, '_')}_AI_Generated.mp4`,
+    thumbnail: '',
+    videoUrl: '',
+    generatedAt: new Date(),
+    status: 'generating',
+  };
+});
 
     setGeneratedAssets(prev => [...prev, ...newAssets]);
 
@@ -411,39 +420,35 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
   const handleSaveFlow = () => {
     try {
       // Convert nodes to scene format for preview
-      const scenes = nodes
-        .filter(node => node.data.nodeType === 'Scene')
-        .map(node => {
-          // Get video URLs from file uploads or workspace imports
-          const getVideoURL = (option: any) => {
-            if (option?.file) {
-              return URL.createObjectURL(option.file);
-            }
-            if (option?.videoURL) {
-              return option.videoURL;
-            }
-            if (option?.thumbnail) {
-              return option.thumbnail;
-            }
-            return '';
-          };
+          const scenes = nodes
+          .filter((node) => node.data.nodeType === 'Scene')
+          .map((node) => {
+            const getVideoURL = (option: any) => {
+              if (option?.file) return URL.createObjectURL(option.file);
+              if (option?.videoURL) return option.videoURL;
+              if (option?.thumbnail) return option.thumbnail;
+              return '';
+            };
 
-          return {
-            id: node.id,
-            title: node.data.title,
-            description: node.data.description || '',
-            optionA: {
-              label: node.data.optionA?.filename || 'Option A',
-              videoURL: getVideoURL(node.data.optionA),
-              nextSceneId: getNextSceneId(node.id, 'A'),
-            },
-            optionB: {
-              label: node.data.optionB?.filename || 'Option B', 
-              videoURL: getVideoURL(node.data.optionB),
-              nextSceneId: getNextSceneId(node.id, 'B'),
-            },
-          };
-        });
+            const optionA = node.data.optionA as { filename?: string };
+            const optionB = node.data.optionB as { filename?: string };
+
+            return {
+              id: node.id,
+              title: String(node.data.title),
+              description: node.data.description || '',
+              optionA: {
+                label: optionA?.filename || 'Option A',
+                videoURL: getVideoURL(node.data.optionA),
+                nextSceneId: getNextSceneId(node.id, 'A'),
+              },
+              optionB: {
+                label: optionB?.filename || 'Option B',
+                videoURL: getVideoURL(node.data.optionB),
+                nextSceneId: getNextSceneId(node.id, 'B'),
+              },
+            };
+          });
 
       const storyFlow = {
         scenes,
