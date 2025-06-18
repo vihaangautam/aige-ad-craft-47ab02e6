@@ -16,6 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus, Save, ArrowLeft, ArrowRight, Sparkles, Archive, AlertCircle } from 'lucide-react';
 import { StoryNode } from './StoryNode';
+import { ChoicePointNode } from './ChoicePointNode';
 import { WorkspaceDrawer } from './WorkspaceDrawer';
 import { GeneratedAsset } from './WorkspaceModal';
 import { useToast } from '@/hooks/use-toast';
@@ -24,8 +25,35 @@ interface StoryNodeData {
   title: string;
   description: string;
   nodeType: 'Scene' | 'Option Point' | 'Game' | 'AR Filter' | string;
+  optionA?: {
+    type: 'upload' | 'workspace-import';
+    file?: File;
+    thumbnail?: string;
+    filename?: string;
+    assetId?: string;
+    videoURL?: string;
+  };
+  optionB?: {
+    type: 'upload' | 'workspace-import';
+    file?: File;
+    thumbnail?: string;
+    filename?: string;
+    assetId?: string;
+    videoURL?: string;
+  };
   onImportFromWorkspace?: (nodeId: string, option: 'A' | 'B') => void;
   [key: string]: any;
+}
+
+interface ChoicePointNodeData {
+  title: string;
+  description: string;
+  options: {
+    label: string;
+    nextSceneId?: string;
+  }[];
+  onUpdate?: (nodeId: string, optionIndex: number, value: string) => void;
+  onDelete?: (nodeId: string) => void;
 }
 
 interface StoryFlowBuilderProps {
@@ -35,9 +63,10 @@ interface StoryFlowBuilderProps {
 
 const nodeTypes = {
   storyNode: StoryNode,
+  choice: ChoicePointNode,
 };
 
-const initialNodes: Node<StoryNodeData>[] = [
+const initialNodes: Node[] = [
   {
     id: '1',
     type: 'storyNode',
@@ -93,7 +122,17 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
       return false;
     }
 
-    // Option Point nodes: max 2 outgoing connections
+    // Choice Point nodes: max 2 outgoing connections
+    if (sourceNode.type === 'choice' && existingEdgesFromSource.length >= 2) {
+      toast({
+        title: "Connection Limit Reached",
+        description: "Choice points can only have two outgoing connections.",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    // Option Point nodes: max 2 outgoing connections (legacy support)
     if (sourceNode.data.nodeType === 'Option Point' && existingEdgesFromSource.length >= 2) {
       toast({
         title: "Connection Limit Reached",
@@ -126,6 +165,29 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
     });
   }, [setNodes, setEdges, toast]);
 
+  // Handle choice point option updates
+  const handleUpdateChoiceOption = useCallback((nodeId: string, optionIndex: number, value: string) => {
+    setNodes((nds) => nds.map(node => {
+      if (node.id === nodeId && node.type === 'choice') {
+        const newOptions = [...(node.data.options || [])];
+        // Ensure we have at least 2 options
+        while (newOptions.length < 2) {
+          newOptions.push({ label: '', nextSceneId: undefined });
+        }
+        newOptions[optionIndex] = { ...newOptions[optionIndex], label: value };
+        
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            options: newOptions,
+          }
+        };
+      }
+      return node;
+    }));
+  }, [setNodes]);
+
   // Handle keyboard events for deletion
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -157,18 +219,40 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
       return;
     }
 
-    const newNode: Node<StoryNodeData> = {
-      id: nodeIdCounter.toString(),
-      type: 'storyNode',
-      position: { x: 100 + Math.random() * 300, y: 100 + Math.random() * 300 },
-      data: {
-        title: `New ${nodeType}`,
-        description: `Description for ${nodeType.toLowerCase()}`,
-        nodeType,
-        onImportFromWorkspace: handleImportFromWorkspace,
-        onDelete: handleDeleteNode,
-      },
-    };
+    let newNode: Node;
+
+    if (nodeType === 'Option Point') {
+      // Create a choice point node
+      newNode = {
+        id: nodeIdCounter.toString(),
+        type: 'choice',
+        position: { x: 100 + Math.random() * 300, y: 100 + Math.random() * 300 },
+        data: {
+          title: 'New Choice Point',
+          description: 'What happens next?',
+          options: [
+            { label: '', nextSceneId: undefined },
+            { label: '', nextSceneId: undefined }
+          ],
+          onUpdate: handleUpdateChoiceOption,
+          onDelete: handleDeleteNode,
+        },
+      };
+    } else {
+      // Create a regular story node
+      newNode = {
+        id: nodeIdCounter.toString(),
+        type: 'storyNode',
+        position: { x: 100 + Math.random() * 300, y: 100 + Math.random() * 300 },
+        data: {
+          title: `New ${nodeType}`,
+          description: `Description for ${nodeType.toLowerCase()}`,
+          nodeType,
+          onImportFromWorkspace: handleImportFromWorkspace,
+          onDelete: handleDeleteNode,
+        },
+      };
+    }
 
     setNodes((nds) => [...nds, newNode]);
     setNodeIdCounter(nodeIdCounter + 1);
@@ -314,41 +398,59 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
     ...node,
     data: {
       ...node.data,
-      onImportFromWorkspace: handleImportFromWorkspace,
+      onImportFromWorkspace: node.type === 'storyNode' ? handleImportFromWorkspace : node.data.onImportFromWorkspace,
       onDelete: handleDeleteNode,
+      onUpdate: node.type === 'choice' ? handleUpdateChoiceOption : node.data.onUpdate,
     }
   }));
 
   const sceneCount = getSceneCount();
   const isSceneLimitReached = sceneCount >= 5;
 
-  // New function to save flow to localStorage
+  // Updated function to save flow to localStorage
   const handleSaveFlow = () => {
     try {
       // Convert nodes to scene format for preview
       const scenes = nodes
         .filter(node => node.data.nodeType === 'Scene')
-        .map(node => ({
-          id: node.id,
-          title: node.data.title,
-          description: node.data.description || '',
-          optionA: {
-            label: node.data.optionA?.label || 'Option A',
-            videoURL: node.data.optionA?.videoURL || node.data.optionA?.thumbnail || '',
-            nextSceneId: getNextSceneId(node.id, 'A'),
-          },
-          optionB: {
-            label: node.data.optionB?.label || 'Option B', 
-            videoURL: node.data.optionB?.videoURL || node.data.optionB?.thumbnail || '',
-            nextSceneId: getNextSceneId(node.id, 'B'),
-          },
-        }));
+        .map(node => {
+          // Get video URLs from file uploads or workspace imports
+          const getVideoURL = (option: any) => {
+            if (option?.file) {
+              return URL.createObjectURL(option.file);
+            }
+            if (option?.videoURL) {
+              return option.videoURL;
+            }
+            if (option?.thumbnail) {
+              return option.thumbnail;
+            }
+            return '';
+          };
+
+          return {
+            id: node.id,
+            title: node.data.title,
+            description: node.data.description || '',
+            optionA: {
+              label: node.data.optionA?.filename || 'Option A',
+              videoURL: getVideoURL(node.data.optionA),
+              nextSceneId: getNextSceneId(node.id, 'A'),
+            },
+            optionB: {
+              label: node.data.optionB?.filename || 'Option B', 
+              videoURL: getVideoURL(node.data.optionB),
+              nextSceneId: getNextSceneId(node.id, 'B'),
+            },
+          };
+        });
 
       const storyFlow = {
         scenes,
         openingSceneId: '1', // Default to first node, or find opening scene
       };
 
+      console.log('💾 Saving story flow:', storyFlow);
       localStorage.setItem('aige_current_flow', JSON.stringify(storyFlow));
       setIsFlowSaved(true);
       
@@ -357,6 +459,7 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
         description: "Your story flow has been saved successfully.",
       });
     } catch (error) {
+      console.error('❌ Save failed:', error);
       toast({
         title: "Save Failed",
         description: "Failed to save the story flow.",

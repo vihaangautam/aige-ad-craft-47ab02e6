@@ -36,7 +36,6 @@ export function PreviewPlayer({ onExit }: PreviewPlayerProps) {
   const [currentScene, setCurrentScene] = useState<SceneNode | null>(null);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [showChoices, setShowChoices] = useState(false);
-  const [isStoryComplete, setIsStoryComplete] = useState(false);
   const [scenePath, setScenePath] = useState<string[]>([]);
   const [currentVideoURL, setCurrentVideoURL] = useState<string>('');
   const [videoError, setVideoError] = useState<string | null>(null);
@@ -105,12 +104,12 @@ export function PreviewPlayer({ onExit }: PreviewPlayerProps) {
         
         // Validate video URL
         if (videoURL && videoURL.trim() !== '') {
-          if (videoURL.startsWith('blob:')) {
-            console.log('✅ Valid blob URL detected');
+          if (videoURL.startsWith('blob:') || videoURL.startsWith('http')) {
+            console.log('✅ Valid video URL detected');
             setCurrentVideoURL(videoURL);
             setVideoError(null);
           } else {
-            console.warn('⚠️ Invalid video URL format (not a blob URL):', videoURL);
+            console.warn('⚠️ Invalid video URL format:', videoURL);
             setVideoError('Invalid video URL format');
           }
         } else {
@@ -129,13 +128,15 @@ export function PreviewPlayer({ onExit }: PreviewPlayerProps) {
           setIsVideoPlaying(true);
           setShowChoices(false);
         } else {
-          // If no video, show choices immediately or complete story
+          // If no video, show choices immediately or exit if no more scenes
           setIsVideoPlaying(false);
           const hasValidNextA = scene.optionA.nextSceneId;
           const hasValidNextB = scene.optionB.nextSceneId;
           
           if (!hasValidNextA && !hasValidNextB) {
-            setIsStoryComplete(true);
+            // No more scenes, exit directly
+            console.log('🎉 Story complete - no more scenes, exiting...');
+            onExit();
           } else {
             setShowChoices(true);
           }
@@ -144,7 +145,7 @@ export function PreviewPlayer({ onExit }: PreviewPlayerProps) {
         console.error('❌ Scene not found:', currentSceneId);
       }
     }
-  }, [storyFlow, currentSceneId]);
+  }, [storyFlow, currentSceneId, onExit]);
 
   // Handle video load success
   const handleVideoLoadStart = () => {
@@ -160,7 +161,7 @@ export function PreviewPlayer({ onExit }: PreviewPlayerProps) {
     setIsVideoPlaying(false);
   };
 
-  // Handle video end - show choice buttons
+  // Handle video end - show choice buttons or exit
   const handleVideoEnd = () => {
     console.log('🏁 Video ended, checking for next options...');
     setIsVideoPlaying(false);
@@ -177,9 +178,9 @@ export function PreviewPlayer({ onExit }: PreviewPlayerProps) {
     });
     
     if (!hasValidNextA && !hasValidNextB) {
-      // Story is complete
-      console.log('🎉 Story complete - no more scenes');
-      setIsStoryComplete(true);
+      // Story is complete, exit directly
+      console.log('🎉 Story complete - no more scenes, exiting...');
+      onExit();
     } else {
       // Show choice buttons
       console.log('🔀 Showing choice buttons');
@@ -202,9 +203,9 @@ export function PreviewPlayer({ onExit }: PreviewPlayerProps) {
       setCurrentSceneId(nextSceneId);
       setScenePath(prev => [...prev, nextSceneId]);
     } else {
-      // No next scene, story complete
-      console.log('🎉 Story complete - selected option has no next scene');
-      setIsStoryComplete(true);
+      // No next scene, story complete - exit directly
+      console.log('🎉 Story complete - selected option has no next scene, exiting...');
+      onExit();
     }
   };
 
@@ -239,44 +240,6 @@ export function PreviewPlayer({ onExit }: PreviewPlayerProps) {
             <Button onClick={onExit} variant="outline" className="mt-4">
               Back to Builder
             </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // Story complete state
-  if (isStoryComplete) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-yellow-100 flex items-center justify-center">
-        <Card className="max-w-md mx-auto text-center">
-          <CardContent className="p-8">
-            <div className="w-16 h-16 bg-yellow-400 rounded-full flex items-center justify-center mx-auto mb-6">
-              <span className="text-2xl">🎉</span>
-            </div>
-            <h2 className="text-2xl font-bold text-black mb-4">
-              Thanks for Watching!
-            </h2>
-            <p className="text-gray-600 mb-6">
-              You've completed this interactive story experience.
-            </p>
-            {renderBreadcrumb()}
-            <div className="flex gap-3 justify-center">
-              <Button onClick={onExit} variant="outline">
-                Back to Builder
-              </Button>
-              <Button 
-                onClick={() => {
-                  console.log('🔄 Restarting story from beginning');
-                  setCurrentSceneId(storyFlow.openingSceneId);
-                  setScenePath([storyFlow.openingSceneId]);
-                  setIsStoryComplete(false);
-                }}
-                className="bg-yellow-400 hover:bg-yellow-300 text-black"
-              >
-                Watch Again
-              </Button>
-            </div>
           </CardContent>
         </Card>
       </div>
