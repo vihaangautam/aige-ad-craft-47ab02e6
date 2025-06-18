@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { useCallback, useState, useEffect } from 'react';
 import {
   ReactFlow,
@@ -309,8 +310,8 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
           ? {
               ...asset,
               status: 'completed' as const,
-              thumbnail: `https://images.unsplash.com/photo-1611077541120-4e12cffbcec7?w=400&h=300&fit=crop&q=80&auto=format&sig=${Math.random()}`,
-              videoUrl: `https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4`,
+              thumbnail: `https://source.unsplash.com/random/400x300?sig=${Math.random()}`,
+              videoUrl: `https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4`,
             }
           : asset
       ));
@@ -369,7 +370,7 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
         ? {
             ...asset,
             status: 'completed' as const,
-            thumbnail: `https://images.unsplash.com/photo-1611077541120-4e12cffbcec7?w=400&h=300&fit=crop&q=80&auto=format&sig=${Math.random()}`,
+            thumbnail: `https://picsum.photos/seed/${Math.random()}/400/300`,
             generatedAt: new Date(),
           }
         : asset
@@ -415,73 +416,89 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
 
   const sceneCount = getSceneCount();
   const isSceneLimitReached = sceneCount >= 5;
+  
+    type OptionData = {
+      filename?: string;
+      file?: File;
+      thumbnail?: string;
+      videoURL?: string;
+    };
 
-  // Updated function to save flow to localStorage
-  const handleSaveFlow = () => {
-    try {
-      // Convert nodes to scene format for preview
-          const scenes = nodes
+    const handleSaveFlow = async () => {
+      try {
+        const scenesToSend = nodes
           .filter((node) => node.data.nodeType === 'Scene')
           .map((node) => {
-            const getVideoURL = (option: any): string => {
-                if (option?.file instanceof File) return URL.createObjectURL(option.file);
-                if (typeof option?.videoURL === 'string') return option.videoURL;
-                if (typeof option?.thumbnail === 'string' && option.thumbnail.startsWith('http')) {
-                  return option.thumbnail;
-                }
-                return '';
-              };
+            const optionA = node.data.optionA as OptionData;
+            const optionB = node.data.optionB as OptionData;
 
-              type OptionData = {
-                filename?: string;
-                file?: File;
-                thumbnail?: string;
-                videoURL?: string;
-              };
+            const getVideoURL = (option: OptionData): string => {
+              if (option?.file instanceof File) return URL.createObjectURL(option.file);
+              if (typeof option?.videoURL === 'string') return option.videoURL;
+              if (typeof option?.thumbnail === 'string') return option.thumbnail;
+              return '';
+            };
 
-              const optionA = node.data.optionA as OptionData;
-              const optionB = node.data.optionB as OptionData;
-
-              return {
-                id: node.id,
-                title: String(node.data.title ?? 'Untitled'),
-                description: node.data.description || '',
-                optionA: {
-                  label: optionA?.filename || 'Option A',
-                  videoURL: getVideoURL(optionA),
-                  nextSceneId: getNextSceneId(node.id, 'A'),
-                },
-                optionB: {
-                  label: optionB?.filename || 'Option B',
-                  videoURL: getVideoURL(optionB),
-                  nextSceneId: getNextSceneId(node.id, 'B'),
-                },
-              };
-
+            return {
+              localId: node.id,
+              title: String(node.data.title ?? 'Untitled'),
+              description: node.data.description || '',
+              label_a: optionA?.filename || 'Option A',
+              video_url_a: getVideoURL(optionA),
+              label_b: optionB?.filename || 'Option B',
+              video_url_b: getVideoURL(optionB),
+              next_scene_a_local: getNextSceneId(node.id, 'A'),
+              next_scene_b_local: getNextSceneId(node.id, 'B'),
+            };
           });
 
-      const storyFlow = {
-        scenes,
-        openingSceneId: '1', // Default to first node, or find opening scene
-      };
+        // Step 1: POST all scenes and get their DB IDs
+        const idMap: { [localId: string]: number } = {};
 
-      console.log('💾 Saving story flow:', storyFlow);
-      localStorage.setItem('aige_current_flow', JSON.stringify(storyFlow));
-      setIsFlowSaved(true);
-      
-      toast({
-        title: "Flow Saved",
-        description: "Your story flow has been saved successfully.",
-      });
-    } catch (error) {
-      console.error('❌ Save failed:', error);
-      toast({
-        title: "Save Failed",
-        description: "Failed to save the story flow.",
-        variant: "destructive"
-      });
-    }
-  };
+        for (let scene of scenesToSend) {
+          const res = await axios.post('http://localhost:8000/api/scenes/', {
+            title: scene.title,
+            description: scene.description,
+            label_a: scene.label_a,
+            video_url_a: scene.video_url_a,
+            label_b: scene.label_b,
+            video_url_b: scene.video_url_b,
+          });
+          idMap[scene.localId] = res.data.id;
+        }
+
+        // Step 2: PATCH next_scene_* links
+        for (let scene of scenesToSend) {
+          const dbId = idMap[scene.localId];
+          const payload: any = {};
+
+          if (scene.next_scene_a_local && idMap[scene.next_scene_a_local]) {
+            payload.next_scene_a = idMap[scene.next_scene_a_local];
+          }
+          if (scene.next_scene_b_local && idMap[scene.next_scene_b_local]) {
+            payload.next_scene_b = idMap[scene.next_scene_b_local];
+          }
+
+          if (Object.keys(payload).length > 0) {
+            await axios.patch(`http://localhost:8000/api/scenes/${dbId}/`, payload);
+          }
+        }
+
+        toast({
+          title: 'Success',
+          description: 'Story flow saved to backend!',
+        });
+
+        console.log('✅ Saved all scenes to backend', idMap);
+      } catch (err) {
+        console.error('❌ Save error:', err);
+        toast({
+          title: 'Save Failed',
+          description: 'Failed to save the story flow to the server.',
+          variant: 'destructive',
+        });
+      }
+    };
 
   // Helper function to find next scene ID from connections
   const getNextSceneId = (sourceNodeId: string, option: 'A' | 'B'): string | null => {
@@ -631,12 +648,12 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
             Open Workspace
           </Button>
           
-          <Button 
+          <Button
             onClick={handleSaveFlow}
             size="sm"
             className="border-yellow-400 text-yellow-700 hover:bg-yellow-50 border"
           >
-            <Save className="w-4 h-4 mr-2" />
+          <Save className="w-4 h-4 mr-2" />
             Save Flow
           </Button>
 
