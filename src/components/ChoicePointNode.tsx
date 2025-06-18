@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { X } from 'lucide-react';
 
-interface ChoicePointNodeData {
+interface ChoicePointNodeData extends Record<string, unknown> {
   title: string;
   description: string;
   options: {
