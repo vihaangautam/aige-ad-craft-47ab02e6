@@ -423,31 +423,41 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
           const scenes = nodes
           .filter((node) => node.data.nodeType === 'Scene')
           .map((node) => {
-            const getVideoURL = (option: any) => {
-              if (option?.file) return URL.createObjectURL(option.file);
-              if (option?.videoURL) return option.videoURL;
-              if (option?.thumbnail) return option.thumbnail;
-              return '';
-            };
+            const getVideoURL = (option: any): string => {
+                if (option?.file instanceof File) return URL.createObjectURL(option.file);
+                if (typeof option?.videoURL === 'string') return option.videoURL;
+                if (typeof option?.thumbnail === 'string' && option.thumbnail.startsWith('http')) {
+                  return option.thumbnail;
+                }
+                return '';
+              };
 
-            const optionA = node.data.optionA as { filename?: string };
-            const optionB = node.data.optionB as { filename?: string };
+              type OptionData = {
+                filename?: string;
+                file?: File;
+                thumbnail?: string;
+                videoURL?: string;
+              };
 
-            return {
-              id: node.id,
-              title: String(node.data.title),
-              description: node.data.description || '',
-              optionA: {
-                label: optionA?.filename || 'Option A',
-                videoURL: getVideoURL(node.data.optionA),
-                nextSceneId: getNextSceneId(node.id, 'A'),
-              },
-              optionB: {
-                label: optionB?.filename || 'Option B',
-                videoURL: getVideoURL(node.data.optionB),
-                nextSceneId: getNextSceneId(node.id, 'B'),
-              },
-            };
+              const optionA = node.data.optionA as OptionData;
+              const optionB = node.data.optionB as OptionData;
+
+              return {
+                id: node.id,
+                title: String(node.data.title ?? 'Untitled'),
+                description: node.data.description || '',
+                optionA: {
+                  label: optionA?.filename || 'Option A',
+                  videoURL: getVideoURL(optionA),
+                  nextSceneId: getNextSceneId(node.id, 'A'),
+                },
+                optionB: {
+                  label: optionB?.filename || 'Option B',
+                  videoURL: getVideoURL(optionB),
+                  nextSceneId: getNextSceneId(node.id, 'B'),
+                },
+              };
+
           });
 
       const storyFlow = {
