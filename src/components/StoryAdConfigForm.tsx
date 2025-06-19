@@ -26,7 +26,7 @@ export function StoryAdConfigForm({ onBack, onNext }: StoryAdConfigFormProps) {
     { value: "emotional", label: "Emotional" },
     { value: "suspenseful", label: "Suspenseful" },
     { value: "funny", label: "Funny" },
-    { value: "dramatic", label: "Dramatic" }
+    { value: "dramatic", label: "Dramatic" },
   ];
 
   const handleAddElement = (e: React.KeyboardEvent) => {
@@ -40,21 +40,37 @@ export function StoryAdConfigForm({ onBack, onNext }: StoryAdConfigFormProps) {
   };
 
   const removeElement = (elementToRemove: string) => {
-    setElements(elements.filter(element => element !== elementToRemove));
+    setElements(elements.filter((el) => el !== elementToRemove));
   };
 
   const saveAdConfiguration = async () => {
+    const accessToken = localStorage.getItem("access");
+    if (!accessToken) {
+      alert("Please log in first to save your ad config.");
+      return;
+    }
+
     try {
-      const res = await axios.post('http://localhost:8000/api/configs/', {
-        theme_prompt: themePrompt,
-        tone: tone,
-        characters_or_elements: elements.join(', '),
-        enable_ar_filters: enableARFilters,
-        include_mini_game: includeMiniGame,
-      });
-      console.log('✅ Config saved:', res.data);
+      const res = await axios.post(
+        "http://localhost:8000/api/configs/",
+        {
+          theme_prompt: themePrompt,
+          tone,
+          characters_or_elements: elements.join(', '),
+          enable_ar_filters: enableARFilters,
+          include_mini_game: includeMiniGame,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+      console.log("✅ Config saved:", res.data);
+      alert("Config saved successfully!");
     } catch (err) {
-      console.error('❌ Failed to save config:', err);
+      console.error("❌ Failed to save config:", err);
+      alert("Error saving config. Please check console.");
     }
   };
 
@@ -96,13 +112,13 @@ export function StoryAdConfigForm({ onBack, onNext }: StoryAdConfigFormProps) {
           </Select>
         </div>
 
-        {/* Characters or Elements */}
+        {/* Elements */}
         <div className="space-y-3">
           <Label htmlFor="elements" className="text-lg font-semibold text-black">Characters or Elements</Label>
           <div className="space-y-3">
             <Input
               id="elements"
-              placeholder="Add elements like 'Father', 'Child', 'Village', 'Festival'"
+              placeholder="Add elements like 'Father', 'Child', 'Village'"
               value={newElement}
               onChange={(e) => setNewElement(e.target.value)}
               onKeyDown={handleAddElement}
@@ -131,7 +147,7 @@ export function StoryAdConfigForm({ onBack, onNext }: StoryAdConfigFormProps) {
           </div>
         </div>
 
-        {/* Toggle Options */}
+        {/* Toggles */}
         <div className="space-y-6">
           <h3 className="text-lg font-semibold text-black">Additional Features</h3>
 
@@ -161,7 +177,7 @@ export function StoryAdConfigForm({ onBack, onNext }: StoryAdConfigFormProps) {
         </div>
       </div>
 
-      {/* Action Buttons */}
+      {/* Actions */}
       <div className="flex items-center justify-between">
         <Button 
           variant="outline" 

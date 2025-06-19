@@ -21,24 +21,27 @@ const AuthPage = () => {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
-  const handleLogin = async (e: React.FormEvent) => {
+
+const handleLogin = async (e: React.FormEvent) => {
   e.preventDefault();
   try {
-    const response = await axios.post("http://localhost:8000/api/token/", {
+    const res = await axios.post('http://localhost:8000/api/token/', {
       username: loginForm.username,
       password: loginForm.password,
     });
 
-    localStorage.setItem("access", response.data.access);
-    localStorage.setItem("refresh", response.data.refresh);
-    
-    console.log("Logged in!");
-    navigate("/"); // or wherever your home page is
-  } catch (error) {
-    console.error("Login failed", error);
-    alert("Login failed. Check username or password.");
+    // Save to localStorage
+    localStorage.setItem('access', res.data.access);
+    localStorage.setItem('refresh', res.data.refresh);
+
+    console.log(" Login success!");
+    navigate("/");  // Now safe to redirect
+  } catch (err) {
+    console.error(" Login failed:", err);
+    alert("Login failed. Check username/password.");
   }
 };
+
 
 
   const handleSignup = async (e: React.FormEvent) => {
