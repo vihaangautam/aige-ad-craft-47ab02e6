@@ -43,21 +43,32 @@ export function StoryAdConfigForm({ onBack, onNext }: StoryAdConfigFormProps) {
     setElements(elements.filter(element => element !== elementToRemove));
   };
 
+  const saveAdConfiguration = async () => {
+    try {
+      const res = await axios.post('http://localhost:8000/api/configs/', {
+        theme_prompt: themePrompt,
+        tone: tone,
+        characters_or_elements: elements.join(', '),
+        enable_ar_filters: enableARFilters,
+        include_mini_game: includeMiniGame,
+      });
+      console.log('✅ Config saved:', res.data);
+    } catch (err) {
+      console.error('❌ Failed to save config:', err);
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto space-y-8">
-      {/* Header */}
       <div className="text-center">
         <h1 className="text-3xl font-bold text-black mb-2">Configure Your Story Ad</h1>
         <p className="text-gray-600">Set up the theme, tone, and elements for your immersive AR story</p>
       </div>
 
-      {/* Form */}
       <div className="bg-white rounded-lg border border-gray-200 p-8 space-y-8">
         {/* Theme Prompt */}
         <div className="space-y-3">
-          <Label htmlFor="theme-prompt" className="text-lg font-semibold text-black">
-            Theme Prompt
-          </Label>
+          <Label htmlFor="theme-prompt" className="text-lg font-semibold text-black">Theme Prompt</Label>
           <Textarea
             id="theme-prompt"
             placeholder="Fathers Day emotional ad in a village"
@@ -65,16 +76,12 @@ export function StoryAdConfigForm({ onBack, onNext }: StoryAdConfigFormProps) {
             onChange={(e) => setThemePrompt(e.target.value)}
             className="min-h-[120px] text-base border-gray-300 focus:border-yellow-400 focus:ring-yellow-400"
           />
-          <p className="text-sm text-gray-500">
-            Describe the overall theme and setting for your story ad
-          </p>
+          <p className="text-sm text-gray-500">Describe the overall theme and setting for your story ad</p>
         </div>
 
         {/* Tone Selection */}
         <div className="space-y-3">
-          <Label htmlFor="tone" className="text-lg font-semibold text-black">
-            Tone
-          </Label>
+          <Label htmlFor="tone" className="text-lg font-semibold text-black">Tone</Label>
           <Select value={tone} onValueChange={setTone}>
             <SelectTrigger className="text-base border-gray-300 focus:border-yellow-400 focus:ring-yellow-400">
               <SelectValue placeholder="Select the tone for your story" />
@@ -89,11 +96,9 @@ export function StoryAdConfigForm({ onBack, onNext }: StoryAdConfigFormProps) {
           </Select>
         </div>
 
-        {/* Characters/Elements */}
+        {/* Characters or Elements */}
         <div className="space-y-3">
-          <Label htmlFor="elements" className="text-lg font-semibold text-black">
-            Characters or Elements
-          </Label>
+          <Label htmlFor="elements" className="text-lg font-semibold text-black">Characters or Elements</Label>
           <div className="space-y-3">
             <Input
               id="elements"
@@ -103,9 +108,7 @@ export function StoryAdConfigForm({ onBack, onNext }: StoryAdConfigFormProps) {
               onKeyDown={handleAddElement}
               className="text-base border-gray-300 focus:border-yellow-400 focus:ring-yellow-400"
             />
-            <p className="text-sm text-gray-500">
-              Press Enter to add each element
-            </p>
+            <p className="text-sm text-gray-500">Press Enter to add each element</p>
             {elements.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {elements.map((element, index) => (
@@ -131,7 +134,7 @@ export function StoryAdConfigForm({ onBack, onNext }: StoryAdConfigFormProps) {
         {/* Toggle Options */}
         <div className="space-y-6">
           <h3 className="text-lg font-semibold text-black">Additional Features</h3>
-          
+
           <div className="flex items-center justify-between p-4 rounded-lg border border-gray-200 bg-gray-50">
             <div className="space-y-1">
               <Label className="text-base font-medium text-black">Enable AR Effects</Label>
@@ -168,9 +171,12 @@ export function StoryAdConfigForm({ onBack, onNext }: StoryAdConfigFormProps) {
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back
         </Button>
-        
+
         <Button 
-          onClick={onNext}
+          onClick={async () => {
+            await saveAdConfiguration();
+            onNext();
+          }}
           className="bg-yellow-400 hover:bg-yellow-300 text-black font-semibold px-8"
         >
           Next: Build Story Flow
