@@ -1,7 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-
 class Scene(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
@@ -17,6 +16,8 @@ class Scene(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
 class AdConfiguration(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+  # 🔐 Link to user
     theme_prompt = models.TextField()
     tone = models.CharField(max_length=100)
     characters_or_elements = models.TextField(blank=True)
