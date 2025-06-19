@@ -23,6 +23,7 @@ import { GeneratedAsset } from './WorkspaceModal';
 import { useToast } from '@/hooks/use-toast';
 
 interface StoryNodeData {
+  nodeNumber: number;
   title: string;
   description: string;
   nodeType: 'Scene' | 'Option Point' | 'Game' | 'AR Filter' | string;
@@ -47,6 +48,7 @@ interface StoryNodeData {
 }
 
 interface ChoicePointNodeData {
+  nodeNumber: number;
   title: string;
   description: string;
   options: {
@@ -73,6 +75,7 @@ const initialNodes: Node[] = [
     type: 'storyNode',
     position: { x: 250, y: 50 },
     data: {
+      nodeNumber: 1,
       title: 'Opening Scene',
       description: 'User enters the virtual showroom',
       nodeType: 'Scene',
@@ -234,6 +237,7 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
         type: 'choice',
         position: { x: 100 + Math.random() * 300, y: 100 + Math.random() * 300 },
         data: {
+          nodeNumber: nodeIdCounter,
           title: 'New Choice Point',
           description: 'What happens next?',
           options: [
@@ -251,6 +255,7 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
         type: 'storyNode',
         position: { x: 100 + Math.random() * 300, y: 100 + Math.random() * 300 },
         data: {
+          nodeNumber: nodeIdCounter,
           title: `New ${nodeType}`,
           description: `Description for ${nodeType.toLowerCase()}`,
           nodeType,
