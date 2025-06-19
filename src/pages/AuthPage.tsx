@@ -1,59 +1,72 @@
-
 import { useState } from "react";
+import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
+import { toast } from "@/components/ui/use-toast";
 
 const AuthPage = () => {
   const navigate = useNavigate();
-  const [loginForm, setLoginForm] = useState({
-    username: "",
-    password: "",
-  });
-  const [signupForm, setSignupForm] = useState({
-    name: "",
-    email: "",
-    password: "",
-  });
+  const [loginForm, setLoginForm] = useState({ username: "", password: "" });
+  const [signupForm, setSignupForm] = useState({ name: "", email: "", password: "" });
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("Login attempt:", loginForm);
-    // Simulate successful login
-    navigate("/");
-  };
+  const handleLogin = async (e: React.FormEvent) => {
+  e.preventDefault();
+  try {
+    const response = await axios.post("http://localhost:8000/api/token/", {
+      username: loginForm.username,
+      password: loginForm.password,
+    });
 
-  const handleSignup = (e: React.FormEvent) => {
+    localStorage.setItem("access", response.data.access);
+    localStorage.setItem("refresh", response.data.refresh);
+    
+    console.log("Logged in!");
+    navigate("/"); // or wherever your home page is
+  } catch (error) {
+    console.error("Login failed", error);
+    alert("Login failed. Check username or password.");
+  }
+};
+
+
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Signup attempt:", signupForm);
-    // Simulate successful signup
-    navigate("/");
+    // ⚠️ Placeholder — integrate with your Django registration endpoint if desired.
+    toast({ title: "Signup not yet implemented", variant: "default" });
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-tr from-yellow-50 via-white to-yellow-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Welcome to AIGE</h1>
+          <h1 className="text-4xl font-bold text-yellow-600">Welcome to AIGE</h1>
           <p className="text-gray-600 mt-2">Sign in to your account or create a new one</p>
         </div>
 
         <Tabs defaultValue="login" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-2 bg-yellow-100 rounded">
             <TabsTrigger value="login">Login</TabsTrigger>
             <TabsTrigger value="signup">Sign Up</TabsTrigger>
           </TabsList>
 
+          {/* Login */}
           <TabsContent value="login">
-            <Card>
+            <Card className="mt-4 shadow-lg">
               <CardHeader>
                 <CardTitle>Login</CardTitle>
-                <CardDescription>
-                  Enter your credentials to sign in
-                </CardDescription>
+                <CardDescription>Access your dashboard</CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleLogin} className="space-y-4">
@@ -64,7 +77,9 @@ const AuthPage = () => {
                       type="text"
                       placeholder="Enter your username"
                       value={loginForm.username}
-                      onChange={(e) => setLoginForm(prev => ({ ...prev, username: e.target.value }))}
+                      onChange={(e) =>
+                        setLoginForm((prev) => ({ ...prev, username: e.target.value }))
+                      }
                       required
                     />
                   </div>
@@ -76,26 +91,29 @@ const AuthPage = () => {
                       type="password"
                       placeholder="Enter your password"
                       value={loginForm.password}
-                      onChange={(e) => setLoginForm(prev => ({ ...prev, password: e.target.value }))}
+                      onChange={(e) =>
+                        setLoginForm((prev) => ({ ...prev, password: e.target.value }))
+                      }
                       required
                     />
                   </div>
 
-                  <Button type="submit" className="w-full">
-                    Sign In
+                  {errorMsg && <p className="text-red-500 text-sm">{errorMsg}</p>}
+
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? "Signing In..." : "Sign In"}
                   </Button>
                 </form>
               </CardContent>
             </Card>
           </TabsContent>
 
+          {/* Signup */}
           <TabsContent value="signup">
-            <Card>
+            <Card className="mt-4 shadow-lg">
               <CardHeader>
                 <CardTitle>Sign Up</CardTitle>
-                <CardDescription>
-                  Create a new account to get started
-                </CardDescription>
+                <CardDescription>Create a new account</CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSignup} className="space-y-4">
@@ -104,9 +122,11 @@ const AuthPage = () => {
                     <Input
                       id="name"
                       type="text"
-                      placeholder="Enter your full name"
+                      placeholder="Enter your name"
                       value={signupForm.name}
-                      onChange={(e) => setSignupForm(prev => ({ ...prev, name: e.target.value }))}
+                      onChange={(e) =>
+                        setSignupForm((prev) => ({ ...prev, name: e.target.value }))
+                      }
                       required
                     />
                   </div>
@@ -118,7 +138,9 @@ const AuthPage = () => {
                       type="email"
                       placeholder="Enter your email"
                       value={signupForm.email}
-                      onChange={(e) => setSignupForm(prev => ({ ...prev, email: e.target.value }))}
+                      onChange={(e) =>
+                        setSignupForm((prev) => ({ ...prev, email: e.target.value }))
+                      }
                       required
                     />
                   </div>
@@ -130,7 +152,9 @@ const AuthPage = () => {
                       type="password"
                       placeholder="Create a password"
                       value={signupForm.password}
-                      onChange={(e) => setSignupForm(prev => ({ ...prev, password: e.target.value }))}
+                      onChange={(e) =>
+                        setSignupForm((prev) => ({ ...prev, password: e.target.value }))
+                      }
                       required
                     />
                   </div>
