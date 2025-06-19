@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { X } from 'lucide-react';
 
 interface ChoicePointNodeData extends Record<string, unknown> {
+  nodeNumber: number;
   title: string;
   description: string;
   options: {
@@ -32,6 +33,11 @@ export const ChoicePointNode = memo(function ChoicePointNodeComponent({
 
   return (
     <Card className="w-80 bg-yellow-50 border-yellow-400 shadow-md relative">
+      {typeof data.nodeNumber === 'number' && (
+        <span className="absolute top-2 left-2 w-5 h-5 rounded-full bg-gray-200 text-gray-700 flex items-center justify-center text-xs font-semibold">
+          {data.nodeNumber}
+        </span>
+      )}
       <Handle type="target" position={Position.Top} className="w-3 h-3 !bg-yellow-400 !border-2 !border-white" />
 
       {/* Delete Button */}
