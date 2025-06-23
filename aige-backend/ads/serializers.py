@@ -7,6 +7,7 @@ class SceneSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class AdConfigurationSerializer(serializers.ModelSerializer):
+    user = serializers.PrimaryKeyRelatedField(read_only=True)
     class Meta:
         model = AdConfiguration
         fields = '__all__'

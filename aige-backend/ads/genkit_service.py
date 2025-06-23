@@ -1,30 +1,13 @@
 import os
 import json
-import genkit
-from genkit import gemini
+import google.generativeai as genai
 
-# 🌟 Initialize Genkit with Gemini
-try:
-    genkit.config(
-        plugins=[
-            gemini.GeminiPlugin(api_key=os.getenv("GOOGLE_API_KEY"))
-        ]
-    )
-except Exception as e:
-    print(f"❌ Failed to configure Genkit: {e}")
-    raise
+# Configure API key
+genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 
-@genkit.flow(name="generate_ad_script", description="Generate an interactive ad script using Genkit")
 def generate_ad_script(config: dict, flow: dict) -> str:
     """
-    Generate an interactive ad script using Genkit and Gemini.
-
-    Args:
-        config: Ad configuration containing tone, theme, etc.
-        flow: Story flow structure with scenes and branches
-
-    Returns:
-        Generated ad script
+    Generate an interactive ad script using Gemini (Google GenAI).
     """
     prompt = f"""You are an expert ad scriptwriter.
 
@@ -51,20 +34,14 @@ Instructions:
 Now begin the script:"""
 
     try:
-        response = gemini.generate(
-            model="gemini-1.5-flash",
-            prompt=prompt,
-            config={
-                "temperature": 0.7,
-                "maxOutputTokens": 2048
-            }
-        )
-        return getattr(response, "text", str(response))
+        model = genai.GenerativeModel("gemini-1.5-flash")
+        response = model.generate_content(prompt)
+        return response.text.strip() if hasattr(response, "text") else str(response)
     except Exception as e:
-        raise Exception(f"Genkit script generation failed: {str(e)}")
+        raise RuntimeError(f"Gemini script generation failed: {str(e)}")
 
 def call_genkit_script_generation(config: dict, flow: dict) -> str:
     """
-    Wrapper for Django view to invoke Genkit script flow.
+    Wrapper for Django views to invoke Gemini script generation.
     """
     return generate_ad_script(config, flow)

@@ -6,8 +6,8 @@ from ads.views import SceneViewSet, AdConfigurationViewSet
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 router = DefaultRouter()
-router.register(r'scenes', SceneViewSet)
-router.register(r'configs', AdConfigurationViewSet)
+router.register(r'scenes', SceneViewSet, basename='scene')
+router.register(r'configs', AdConfigurationViewSet, basename='config')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
