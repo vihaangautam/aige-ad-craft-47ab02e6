@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 
 class Scene(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)  # ✅ Added
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
 
@@ -15,9 +16,11 @@ class Scene(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def __str__(self):
+        return self.title
+
 class AdConfiguration(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-  # 🔐 Link to user
+    user = models.ForeignKey(User, on_delete=models.CASCADE)  # ✅ Added
     theme_prompt = models.TextField()
     tone = models.CharField(max_length=100)
     characters_or_elements = models.TextField(blank=True)
@@ -26,6 +29,9 @@ class AdConfiguration(models.Model):
     include_mini_game = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username}'s config"
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
