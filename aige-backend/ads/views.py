@@ -1,16 +1,17 @@
+from rest_framework import viewsets
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from .models import Scene, AdConfiguration
 from .serializers import SceneSerializer, AdConfigurationSerializer
-from .utils import build_ai_prompt, call_gemini_or_gpt  # Make sure ai.py is in your ads/ folder
+from .utils import build_ai_prompt, call_gemini_or_gpt
 
 class SceneViewSet(viewsets.ModelViewSet):
     serializer_class = SceneSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Scene.objects.all()
+        return Scene.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
@@ -25,7 +26,6 @@ class AdConfigurationViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
-# ✅ FIX: Add this
 class ScriptGenerationView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -36,7 +36,9 @@ class ScriptGenerationView(APIView):
         if not config or not flow:
             return Response({"error": "Missing config or flow"}, status=400)
 
-        prompt = build_ai_prompt(config, flow)
-        script = call_gemini_or_gpt(prompt)
-
-        return Response({"script": script})
+        try:
+            prompt = build_ai_prompt(config, flow)
+            script = call_gemini_or_gpt(prompt)
+            return Response({"script": script})
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)

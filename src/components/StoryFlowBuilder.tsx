@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { useCallback, useState, useEffect } from 'react';
 import {
   ReactFlow,
@@ -21,6 +20,7 @@ import { ChoicePointNode } from './ChoicePointNode';
 import { WorkspaceDrawer } from './WorkspaceDrawer';
 import { GeneratedAsset } from './WorkspaceModal';
 import { useToast } from '@/hooks/use-toast';
+import { scenesAPI, scriptAPI } from '@/lib/auth';
 
 interface StoryNodeData {
   nodeNumber: number;
@@ -94,12 +94,12 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
   const [generatedAssets, setGeneratedAssets] = useState<GeneratedAsset[]>([]);
   const [pendingAssignment, setPendingAssignment] = useState<{ nodeId: string; option: 'A' | 'B' } | null>(null);
   const [isFlowSaved, setIsFlowSaved] = useState(false);
+  const [isGeneratingScript, setIsGeneratingScript] = useState(false);
   const { toast } = useToast();
 
   // Center the canvas on first load
   useEffect(() => {
     const timer = setTimeout(() => {
-      // This will center the canvas properly on first render
       const fitViewOptions = { 
         padding: 0.2, 
         includeHiddenNodes: false,
@@ -170,32 +170,31 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
   }, [setNodes, setEdges, toast]);
 
   const handleUpdateChoiceOption = useCallback((nodeId: string, optionIndex: number, value: string) => {
-  setNodes((nds) =>
-    nds.map((node) => {
-      if (node.id === nodeId && node.type === 'choice') {
-        const existingOptions = Array.isArray(node.data.options) ? node.data.options : [];
+    setNodes((nds) =>
+      nds.map((node) => {
+        if (node.id === nodeId && node.type === 'choice') {
+          const existingOptions = Array.isArray(node.data.options) ? node.data.options : [];
 
-        // Ensure at least 2 options
-        const newOptions = [...existingOptions];
-        while (newOptions.length < 2) {
-          newOptions.push({ label: '', nextSceneId: undefined });
+          // Ensure at least 2 options
+          const newOptions = [...existingOptions];
+          while (newOptions.length < 2) {
+            newOptions.push({ label: '', nextSceneId: undefined });
+          }
+
+          newOptions[optionIndex] = { ...newOptions[optionIndex], label: value };
+
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              options: newOptions,
+            },
+          };
         }
-
-        newOptions[optionIndex] = { ...newOptions[optionIndex], label: value };
-
-        return {
-          ...node,
-          data: {
-            ...node.data,
-            options: newOptions,
-          },
-        };
-      }
-      return node;
-    })
-  );
-}, [setNodes]);
-
+        return node;
+      })
+    );
+  }, [setNodes]);
 
   // Handle keyboard events for deletion
   useEffect(() => {
@@ -290,19 +289,19 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
     
     // Create generating assets
     const newAssets: GeneratedAsset[] = sceneNodes.map((node) => {
-  const title = typeof node.data.title === 'string' ? node.data.title : 'Untitled';
+      const title = typeof node.data.title === 'string' ? node.data.title : 'Untitled';
 
-  return {
-    id: `asset-${node.id}-${Date.now()}`,
-    sceneTitle: title,
-    sceneId: node.id,
-    filename: `${title.replace(/\s+/g, '_')}_AI_Generated.mp4`,
-    thumbnail: '',
-    videoUrl: '',
-    generatedAt: new Date(),
-    status: 'generating',
-  };
-});
+      return {
+        id: `asset-${node.id}-${Date.now()}`,
+        sceneTitle: title,
+        sceneId: node.id,
+        filename: `${title.replace(/\s+/g, '_')}_AI_Generated.mp4`,
+        thumbnail: '',
+        videoUrl: '',
+        generatedAt: new Date(),
+        status: 'generating',
+      };
+    });
 
     setGeneratedAssets(prev => [...prev, ...newAssets]);
 
@@ -422,88 +421,98 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
   const sceneCount = getSceneCount();
   const isSceneLimitReached = sceneCount >= 5;
   
-    type OptionData = {
-      filename?: string;
-      file?: File;
-      thumbnail?: string;
-      videoURL?: string;
-    };
+  type OptionData = {
+    filename?: string;
+    file?: File;
+    thumbnail?: string;
+    videoURL?: string;
+  };
 
-    const handleSaveFlow = async () => {
-      try {
-        const scenesToSend = nodes
-          .filter((node) => node.data.nodeType === 'Scene')
-          .map((node) => {
-            const optionA = node.data.optionA as OptionData;
-            const optionB = node.data.optionB as OptionData;
+  const handleSaveFlow = async () => {
+    try {
+      const scenesToSend = nodes
+        .filter((node) => node.data.nodeType === 'Scene')
+        .map((node) => {
+          const optionA = node.data.optionA as OptionData;
+          const optionB = node.data.optionB as OptionData;
 
-            const getVideoURL = (option: OptionData): string => {
-              if (option?.file instanceof File) return URL.createObjectURL(option.file);
-              if (typeof option?.videoURL === 'string') return option.videoURL;
-              if (typeof option?.thumbnail === 'string') return option.thumbnail;
-              return '';
-            };
+          const getVideoURL = (option: OptionData): string => {
+            if (option?.file instanceof File) return URL.createObjectURL(option.file);
+            if (typeof option?.videoURL === 'string') return option.videoURL;
+            if (typeof option?.thumbnail === 'string') return option.thumbnail;
+            return '';
+          };
 
-            return {
-              localId: node.id,
-              title: String(node.data.title ?? 'Untitled'),
-              description: node.data.description || '',
-              label_a: optionA?.filename || 'Option A',
-              video_url_a: getVideoURL(optionA),
-              label_b: optionB?.filename || 'Option B',
-              video_url_b: getVideoURL(optionB),
-              next_scene_a_local: getNextSceneId(node.id, 'A'),
-              next_scene_b_local: getNextSceneId(node.id, 'B'),
-            };
-          });
-
-        // Step 1: POST all scenes and get their DB IDs
-        const idMap: { [localId: string]: number } = {};
-
-        for (let scene of scenesToSend) {
-          const res = await axios.post('http://localhost:8000/api/scenes/', {
-            title: scene.title,
-            description: scene.description,
-            label_a: scene.label_a,
-            video_url_a: scene.video_url_a,
-            label_b: scene.label_b,
-            video_url_b: scene.video_url_b,
-          });
-          idMap[scene.localId] = res.data.id;
-        }
-
-        // Step 2: PATCH next_scene_* links
-        for (let scene of scenesToSend) {
-          const dbId = idMap[scene.localId];
-          const payload: any = {};
-
-          if (scene.next_scene_a_local && idMap[scene.next_scene_a_local]) {
-            payload.next_scene_a = idMap[scene.next_scene_a_local];
-          }
-          if (scene.next_scene_b_local && idMap[scene.next_scene_b_local]) {
-            payload.next_scene_b = idMap[scene.next_scene_b_local];
-          }
-
-          if (Object.keys(payload).length > 0) {
-            await axios.patch(`http://localhost:8000/api/scenes/${dbId}/`, payload);
-          }
-        }
-
-        toast({
-          title: 'Success',
-          description: 'Story flow saved to backend!',
+          return {
+            localId: node.id,
+            title: String(node.data.title ?? 'Untitled'),
+            description: node.data.description || '',
+            label_a: optionA?.filename || 'Option A',
+            video_url_a: getVideoURL(optionA),
+            label_b: optionB?.filename || 'Option B',
+            video_url_b: getVideoURL(optionB),
+            next_scene_a_local: getNextSceneId(node.id, 'A'),
+            next_scene_b_local: getNextSceneId(node.id, 'B'),
+          };
         });
 
-        console.log('✅ Saved all scenes to backend', idMap);
-      } catch (err) {
-        console.error('❌ Save error:', err);
-        toast({
-          title: 'Save Failed',
-          description: 'Failed to save the story flow to the server.',
-          variant: 'destructive',
+      // Step 1: POST all scenes and get their DB IDs
+      const idMap: { [localId: string]: number } = {};
+
+      for (let scene of scenesToSend) {
+        const res = await scenesAPI.create({
+          title: scene.title,
+          description: scene.description,
+          label_a: scene.label_a,
+          video_url_a: scene.video_url_a,
+          label_b: scene.label_b,
+          video_url_b: scene.video_url_b,
         });
+        idMap[scene.localId] = res.data.id;
       }
-    };
+
+      // Step 2: PATCH next_scene_* links
+      for (let scene of scenesToSend) {
+        const dbId = idMap[scene.localId];
+        const payload: any = {};
+
+        if (scene.next_scene_a_local && idMap[scene.next_scene_a_local]) {
+          payload.next_scene_a = idMap[scene.next_scene_a_local];
+        }
+        if (scene.next_scene_b_local && idMap[scene.next_scene_b_local]) {
+          payload.next_scene_b = idMap[scene.next_scene_b_local];
+        }
+
+        if (Object.keys(payload).length > 0) {
+          await scenesAPI.update(dbId.toString(), payload);
+        }
+      }
+
+      // Store flow data for script generation
+      const flowData = {
+        scenes: scenesToSend,
+        openingSceneId: '1',
+        nodes: nodes,
+        edges: edges
+      };
+      localStorage.setItem('aige_current_flow', JSON.stringify(flowData));
+      setIsFlowSaved(true);
+
+      toast({
+        title: 'Success',
+        description: 'Story flow saved successfully!',
+      });
+
+      console.log('✅ Saved all scenes to backend', idMap);
+    } catch (err: any) {
+      console.error('❌ Save error:', err);
+      toast({
+        title: 'Save Failed',
+        description: err.response?.data?.detail || 'Failed to save the story flow to the server.',
+        variant: 'destructive',
+      });
+    }
+  };
 
   // Helper function to find next scene ID from connections
   const getNextSceneId = (sourceNodeId: string, option: 'A' | 'B'): string | null => {
@@ -515,6 +524,56 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
     const targetEdge = outgoingEdges[option === 'A' ? 0 : 1];
     
     return targetEdge?.target || null;
+  };
+
+  const handleGenerateScript = async () => {
+    if (!isFlowSaved) {
+      toast({
+        title: "Save Required",
+        description: "Please save your flow before generating the script.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsGeneratingScript(true);
+    
+    try {
+      // Get saved config and flow data
+      const savedConfig = localStorage.getItem('currentAdConfig');
+      const savedFlow = localStorage.getItem('aige_current_flow');
+      
+      if (!savedConfig || !savedFlow) {
+        throw new Error('Missing configuration or flow data');
+      }
+
+      const config = JSON.parse(savedConfig);
+      const flow = JSON.parse(savedFlow);
+
+      // Call the script generation API (now using Genkit)
+      const response = await scriptAPI.generate(config, flow);
+      
+      // Store the generated script
+      localStorage.setItem('generatedScript', response.data.script);
+      
+      toast({
+        title: "Script Generated!",
+        description: "Your interactive ad script has been generated successfully.",
+      });
+
+      // Show the script in a modal or navigate to preview
+      console.log('Generated Script:', response.data.script);
+      
+    } catch (error: any) {
+      console.error('Script generation failed:', error);
+      toast({
+        title: "Generation Failed",
+        description: error.response?.data?.error || "Failed to generate script. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGeneratingScript(false);
+    }
   };
 
   const handleSeePreview = () => {
@@ -658,20 +717,39 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
             size="sm"
             className="border-yellow-400 text-yellow-700 hover:bg-yellow-50 border"
           >
-          <Save className="w-4 h-4 mr-2" />
+            <Save className="w-4 h-4 mr-2" />
             Save Flow
           </Button>
 
           {isFlowSaved && (
             <Button 
-              onClick={handleSeePreview}
+              onClick={handleGenerateScript}
+              disabled={isGeneratingScript}
               size="sm"
-              className="bg-yellow-400 hover:bg-yellow-300 text-black font-semibold"
+              className="bg-green-600 hover:bg-green-700 text-white"
             >
-              See Preview
-              <ArrowRight className="w-4 h-4 ml-2" />
+              {isGeneratingScript ? (
+                <>
+                  <div className="w-4 h-4 mr-2 border border-white border-t-transparent rounded-full animate-spin" />
+                  Generating Script...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Generate Script
+                </>
+              )}
             </Button>
           )}
+
+          <Button 
+            onClick={handleSeePreview}
+            size="sm"
+            className="bg-yellow-400 hover:bg-yellow-300 text-black font-semibold"
+          >
+            See Preview
+            <ArrowRight className="w-4 h-4 ml-2" />
+          </Button>
         </div>
       </div>
 
