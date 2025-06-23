@@ -1,29 +1,31 @@
 import os
 import json
-from genkit import genkit
-from genkit.models import gemini
+import genkit
+from genkit import gemini
 
-# Initialize Genkit with Gemini
-genkit.config(
-    plugins=[
-        gemini.GeminiPlugin(api_key=os.getenv("GOOGLE_API_KEY"))
-    ]
-)
+# 🌟 Initialize Genkit with Gemini
+try:
+    genkit.config(
+        plugins=[
+            gemini.GeminiPlugin(api_key=os.getenv("GOOGLE_API_KEY"))
+        ]
+    )
+except Exception as e:
+    print(f"❌ Failed to configure Genkit: {e}")
+    raise
 
-@genkit.flow
+@genkit.flow(name="generate_ad_script", description="Generate an interactive ad script using Genkit")
 def generate_ad_script(config: dict, flow: dict) -> str:
     """
     Generate an interactive ad script using Genkit and Gemini.
-    
+
     Args:
-        config: Ad configuration containing theme, tone, etc.
-        flow: Story flow structure with scenes and choices
-    
+        config: Ad configuration containing tone, theme, etc.
+        flow: Story flow structure with scenes and branches
+
     Returns:
-        Generated script as a string
+        Generated ad script
     """
-    
-    # Build the AI prompt
     prompt = f"""You are an expert ad scriptwriter.
 
 Write a 30-second interactive video ad script using the details below.
@@ -48,24 +50,21 @@ Instructions:
 
 Now begin the script:"""
 
-    # Generate using Gemini
-    response = gemini.generate(
-        model="gemini-1.5-flash",
-        prompt=prompt,
-        config={
-            "temperature": 0.7,
-            "maxOutputTokens": 2048,
-        }
-    )
-    
-    return response.text
+    try:
+        response = gemini.generate(
+            model="gemini-1.5-flash",
+            prompt=prompt,
+            config={
+                "temperature": 0.7,
+                "maxOutputTokens": 2048
+            }
+        )
+        return getattr(response, "text", str(response))
+    except Exception as e:
+        raise Exception(f"Genkit script generation failed: {str(e)}")
 
 def call_genkit_script_generation(config: dict, flow: dict) -> str:
     """
-    Wrapper function to call the Genkit flow from Django views.
+    Wrapper for Django view to invoke Genkit script flow.
     """
-    try:
-        result = generate_ad_script(config, flow)
-        return result
-    except Exception as e:
-        raise Exception(f"Genkit script generation failed: {str(e)}")
+    return generate_ad_script(config, flow)

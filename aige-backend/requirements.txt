@@ -4,6 +4,10 @@ python-decouple
 djangorestframework
 django-cors-headers
 djangorestframework-simplejwt
+genkit
+google-genai
+
+
 
 
 
