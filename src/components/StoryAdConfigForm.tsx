@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { X, ArrowLeft, ArrowRight } from "lucide-react";
+import { configsAPI } from "@/lib/auth";
+import { useToast } from "@/hooks/use-toast";
 
 interface StoryAdConfigFormProps {
   onBack: () => void;
@@ -21,6 +22,8 @@ export function StoryAdConfigForm({ onBack, onNext }: StoryAdConfigFormProps) {
   const [newElement, setNewElement] = useState("");
   const [enableARFilters, setEnableARFilters] = useState(true);
   const [includeMiniGame, setIncludeMiniGame] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
   const toneOptions = [
     { value: "emotional", label: "Emotional" },
@@ -44,33 +47,53 @@ export function StoryAdConfigForm({ onBack, onNext }: StoryAdConfigFormProps) {
   };
 
   const saveAdConfiguration = async () => {
-    const accessToken = localStorage.getItem("access");
-    if (!accessToken) {
-      alert("Please log in first to save your ad config.");
-      return;
+    if (!themePrompt.trim() || !tone) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill in theme prompt and tone",
+        variant: "destructive"
+      });
+      return false;
     }
 
+    setIsLoading(true);
     try {
-      const res = await axios.post(
-        "http://localhost:8000/api/configs/",
-        {
-          theme_prompt: themePrompt,
-          tone,
-          characters_or_elements: elements.join(', '),
-          enable_ar_filters: enableARFilters,
-          include_mini_game: includeMiniGame,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
-      console.log("✅ Config saved:", res.data);
-      alert("Config saved successfully!");
-    } catch (err) {
-      console.error("❌ Failed to save config:", err);
-      alert("Error saving config. Please check console.");
+      const configData = {
+        theme_prompt: themePrompt,
+        tone,
+        characters_or_elements: elements.join(', '),
+        enable_ar_filters: enableARFilters,
+        include_mini_game: includeMiniGame,
+      };
+
+      await configsAPI.create(configData);
+      
+      // Store config in localStorage for the flow builder
+      localStorage.setItem('currentAdConfig', JSON.stringify(configData));
+      
+      toast({
+        title: "Success",
+        description: "Ad configuration saved successfully!",
+      });
+      
+      return true;
+    } catch (error: any) {
+      console.error("Failed to save config:", error);
+      toast({
+        title: "Error",
+        description: error.response?.data?.detail || "Failed to save configuration",
+        variant: "destructive"
+      });
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleNext = async () => {
+    const success = await saveAdConfiguration();
+    if (success) {
+      onNext();
     }
   };
 
@@ -183,20 +206,28 @@ export function StoryAdConfigForm({ onBack, onNext }: StoryAdConfigFormProps) {
           variant="outline" 
           onClick={onBack}
           className="border-gray-300 hover:border-yellow-400 hover:text-yellow-600"
+          disabled={isLoading}
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back
         </Button>
 
         <Button 
-          onClick={async () => {
-            await saveAdConfiguration();
-            onNext();
-          }}
+          onClick={handleNext}
           className="bg-yellow-400 hover:bg-yellow-300 text-black font-semibold px-8"
+          disabled={isLoading}
         >
-          Next: Build Story Flow
-          <ArrowRight className="w-4 h-4 ml-2" />
+          {isLoading ? (
+            <>
+              <div className="w-4 h-4 mr-2 border border-black border-t-transparent rounded-full animate-spin" />
+              Saving...
+            </>
+          ) : (
+            <>
+              Next: Build Story Flow
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </>
+          )}
         </Button>
       </div>
     </div>
