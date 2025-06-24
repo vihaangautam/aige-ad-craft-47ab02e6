@@ -20,7 +20,7 @@ import { ChoicePointNode } from './ChoicePointNode';
 import { WorkspaceDrawer } from './WorkspaceDrawer';
 import { GeneratedAsset } from './WorkspaceModal';
 import { useToast } from '@/hooks/use-toast';
-import { scenesAPI, scriptAPI } from '@/lib/auth';
+import { scenesAPI, scriptAPI, getUserIdFromToken } from '@/lib/auth';
 
 interface StoryNodeData {
   nodeNumber: number;
@@ -467,6 +467,7 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
           video_url_a: scene.video_url_a,
           label_b: scene.label_b,
           video_url_b: scene.video_url_b,
+          user: getUserIdFromToken(),
         });
         idMap[scene.localId] = res.data.id;
       }

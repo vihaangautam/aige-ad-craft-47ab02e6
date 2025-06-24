@@ -97,4 +97,17 @@ export const scriptAPI = {
     apiClient.post('/generate-script/', { config, flow }),
 };
 
+// Utility to decode JWT and extract user id
+export function getUserIdFromToken() {
+  const token = localStorage.getItem('access');
+  if (!token) return null;
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    // Try common user id fields
+    return payload.user_id || payload.sub || payload.id || null;
+  } catch (e) {
+    return null;
+  }
+}
+
 export default apiClient;
