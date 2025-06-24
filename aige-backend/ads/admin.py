@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
-from .models import Scene, AdConfiguration, UserProfile
+from .models import Scene, AdConfiguration, UserProfile, GeneratedScript
 
 class UserProfileInline(admin.StackedInline):
     model = UserProfile
@@ -23,5 +23,10 @@ class SceneAdmin(admin.ModelAdmin):
 @admin.register(AdConfiguration)
 class AdConfigurationAdmin(admin.ModelAdmin):
     list_display = ('id', 'theme_prompt', 'tone', 'enable_ar_filters', 'include_mini_game', 'created_at')
+
+@admin.register(GeneratedScript)
+class GeneratedScriptAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user', 'created_at')
+    readonly_fields = ('config', 'flow', 'script')
 
 admin.site.register(UserProfile)

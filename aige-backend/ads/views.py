@@ -2,7 +2,7 @@ from rest_framework import viewsets
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from .models import Scene, AdConfiguration
+from .models import Scene, AdConfiguration, GeneratedScript
 from .serializers import SceneSerializer, AdConfigurationSerializer
 from .utils import build_ai_prompt, call_gemini_or_gpt
 
@@ -39,6 +39,13 @@ class ScriptGenerationView(APIView):
         try:
             prompt = build_ai_prompt(config, flow)
             script = call_gemini_or_gpt(prompt)
+            # Save generated script to the database
+            GeneratedScript.objects.create(
+                user=request.user,
+                config=config,
+                flow=flow,
+                script=script
+            )
             return Response({"script": script})
         except Exception as e:
             return Response({"error": str(e)}, status=500)

@@ -42,3 +42,13 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return self.user.username
+
+class GeneratedScript(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    config = models.JSONField()
+    flow = models.JSONField()
+    script = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Script by {self.user.username} at {self.created_at}"
