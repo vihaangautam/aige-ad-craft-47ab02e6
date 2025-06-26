@@ -41,6 +41,8 @@ INSTRUCTIONS:
             - option_b_text: a label for Option B
             - option_a_leads_to: the scene_id of the node Option A should take the user to (from the flow)
             - option_b_leads_to: the scene_id of the node Option B should take the user to (from the flow)
+        - For option_a_text and option_b_text:
+            - Each label should be concise (ideally under 40 characters), clear, and actionable.
 - For nodes of type "choice_point":
     - DO NOT generate a standalone script for the choice point. Instead, embed all choice logic in the preceding scene's JSON object as above.
 - Each object in the JSON array should therefore be either:
