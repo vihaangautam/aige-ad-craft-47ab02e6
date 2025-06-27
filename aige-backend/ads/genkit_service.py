@@ -9,6 +9,10 @@ def generate_structured_ad_script(config: dict, flow: dict) -> str:
     """
     Generate a scene-by-scene, video-compatible interactive ad script in structured JSON using Gemini (Google GenAI).
     """
+    characters_or_elements = config.get("characters_or_elements", "").strip()
+    if not characters_or_elements:
+        raise ValueError("No characters or elements specified. Please provide characters or elements for the story.")
+
     prompt = f"""
 You are an expert interactive ad scriptwriter and narrative designer for AI-generated video ads.
 
@@ -22,11 +26,11 @@ Duration: {config.get("durationInSeconds", 30)} seconds
 Theme: {config.get("theme_prompt", "")}
 Include Mini Game: {config.get("include_mini_game", False)}
 Enable AR Filters: {config.get("enable_ar_filters", False)}
-
-Story Flow (JSON):
-{json.dumps(flow, indent=2)}
+Characters/Elements: {characters_or_elements}
 
 INSTRUCTIONS:
+- You MUST use ONLY the provided characters or elements in every scene. Do not invent new characters or elements.
+- Make the provided characters/elements central to the narrative, dialogue, visuals, and actions in every scene.
 - Return a JSON array, one object per node (scene or scene+choice). DO NOT return prose or markdown.
 - For each node of type "scene":
     - Include:

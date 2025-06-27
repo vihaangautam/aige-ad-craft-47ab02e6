@@ -548,8 +548,28 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
         throw new Error('Missing configuration or flow data');
       }
 
-      const config = JSON.parse(savedConfig);
+      let config = JSON.parse(savedConfig);
       const flow = JSON.parse(savedFlow);
+
+      // --- Ensure characters_or_elements is present and non-empty ---
+      // If config.characters_or_elements is missing or empty, try to get it from localStorage again (redundant, but safe)
+      if (!config.characters_or_elements || config.characters_or_elements.trim() === "") {
+        const parsed = JSON.parse(savedConfig);
+        if (parsed.characters_or_elements) {
+          config.characters_or_elements = parsed.characters_or_elements;
+        }
+      }
+
+      // If still missing, show a toast and abort
+      if (!config.characters_or_elements || config.characters_or_elements.trim() === "") {
+        toast({
+          title: "Generation Failed",
+          description: "No characters or elements specified. Please provide characters or elements for the story.",
+          variant: "destructive"
+        });
+        setIsGeneratingScript(false);
+        return;
+      }
 
       // Call the script generation API (now using Genkit)
       const response = await scriptAPI.generate(config, flow);
