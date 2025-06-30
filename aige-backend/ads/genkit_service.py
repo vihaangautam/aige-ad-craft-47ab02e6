@@ -1,6 +1,7 @@
 import os
 import json
 import google.generativeai as genai
+from .flow_preprocess import preprocess_flow_for_script
 
 # Configure API key
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
@@ -12,6 +13,10 @@ def generate_structured_ad_script(config: dict, flow: dict) -> str:
     characters_or_elements = config.get("characters_or_elements", "").strip()
     if not characters_or_elements:
         raise ValueError("No characters or elements specified. Please provide characters or elements for the story.")
+
+    # Preprocess the flow to merge choice_point data into scenes
+    preprocessed_flow = preprocess_flow_for_script(flow)
+    flow_json = json.dumps(preprocessed_flow, ensure_ascii=False)
 
     prompt = f"""
 You are an expert interactive ad scriptwriter and narrative designer for AI-generated video ads.
@@ -27,6 +32,9 @@ Theme: {config.get("theme_prompt", "")}
 Include Mini Game: {config.get("include_mini_game", False)}
 Enable AR Filters: {config.get("enable_ar_filters", False)}
 Characters/Elements: {characters_or_elements}
+
+STORY FLOW (JSON):
+{flow_json}
 
 INSTRUCTIONS:
 - You MUST use ONLY the provided characters or elements in every scene. Do not invent new characters or elements.

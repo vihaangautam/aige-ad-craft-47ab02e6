@@ -47,6 +47,12 @@ export function StoryAdConfigForm({ onBack, onNext }: StoryAdConfigFormProps) {
   };
 
   const saveAdConfiguration = async () => {
+    // Always include the current input in the elements list
+    let finalElements = elements;
+    if (newElement.trim() && !elements.includes(newElement.trim())) {
+      finalElements = [...elements, newElement.trim()];
+    }
+
     if (!themePrompt.trim() || !tone) {
       toast({
         title: "Validation Error",
@@ -61,7 +67,7 @@ export function StoryAdConfigForm({ onBack, onNext }: StoryAdConfigFormProps) {
       const configData = {
         theme_prompt: themePrompt,
         tone,
-        characters_or_elements: elements.join(', '),
+        characters_or_elements: finalElements.join(', '),
         enable_ar_filters: enableARFilters,
         include_mini_game: includeMiniGame,
       };

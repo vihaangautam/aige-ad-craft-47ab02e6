@@ -576,7 +576,68 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
       
       // Store the generated script
       localStorage.setItem('generatedScript', response.data.script);
-      
+
+      // --- NEW: Enforce 3-scene, 1-choice structure in the frontend ---
+      try {
+        const scriptJson = typeof response.data.script === 'string' ? JSON.parse(response.data.script) : response.data.script;
+
+        // Find the first scene with a choice prompt
+        const choiceSceneIndex = scriptJson.findIndex(
+          (scene: any) => scene.post_scene_choice_prompt && scene.option_a_text && scene.option_b_text
+        );
+        if (choiceSceneIndex === -1) throw new Error('No choice scene found in script');
+
+        // Only keep the choice scene and the next two scenes as outcomes
+        const filteredScript = [
+          scriptJson[choiceSceneIndex],
+          scriptJson[choiceSceneIndex + 1],
+          scriptJson[choiceSceneIndex + 2]
+        ];
+
+        let scriptChoiceIndex = 0;
+        setNodes((prevNodes) => {
+          let outcomeIndex = 1;
+          return prevNodes.map((node, idx) => {
+            if (node.type === 'choice' && scriptChoiceIndex === 0) {
+              // Only update the first choice point
+              const scriptScene = filteredScript[0];
+              scriptChoiceIndex++;
+              if (scriptScene) {
+                return {
+                  ...node,
+                  data: {
+                    ...node.data,
+                    description: scriptScene.post_scene_choice_prompt || node.data.description,
+                    options: [
+                      { ...node.data.options[0], label: scriptScene.option_a_text || node.data.options[0]?.label },
+                      { ...node.data.options[1], label: scriptScene.option_b_text || node.data.options[1]?.label },
+                    ],
+                  },
+                };
+              }
+            } else if (node.type === 'storyNode' && outcomeIndex <= 2) {
+              // Update the next two scenes as outcomes
+              const scriptScene = filteredScript[outcomeIndex];
+              outcomeIndex++;
+              if (scriptScene) {
+                return {
+                  ...node,
+                  data: {
+                    ...node.data,
+                    title: scriptScene.scene_id || node.data.title,
+                    description: scriptScene.visual || node.data.description,
+                    // Optionally update dialogue/audio if you want
+                  },
+                };
+              }
+            }
+            return node;
+          });
+        });
+      } catch (e) {
+        console.warn('Could not parse or sync script to flow nodes:', e);
+      }
+
       toast({
         title: "Script Generated!",
         description: "Your interactive ad script has been generated successfully.",

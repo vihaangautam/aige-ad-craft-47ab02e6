@@ -76,9 +76,9 @@ export const ChoicePointNode = memo(function ChoicePointNodeComponent({
               <input
                 type="text"
                 value={data.options?.[i]?.label || ''}
-                onChange={(e) => updateChoiceOption(i, e.target.value)}
+                readOnly
                 placeholder={`Option ${option} text (e.g. 'Take the left door')`}
-                className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
+                className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent bg-gray-100 cursor-not-allowed"
               />
             </div>
           ))}
