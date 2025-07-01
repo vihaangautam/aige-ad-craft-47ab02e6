@@ -14,7 +14,7 @@ interface CreateAdPageProps {
 const adTypes = [
   {
     id: "immersive-story",
-    title: "Immersive Story AR",
+    title: "Immersive Story Ad",
     description: "Create interactive storytelling experiences with AR elements",
     icon: Sparkles,
     popular: true
@@ -28,7 +28,7 @@ const adTypes = [
   },
   {
     id: "game-ar",
-    title: "Game AR",
+    title: "AR Story-Games",
     description: "Engage users with interactive AR games and challenges",
     icon: Gamepad2,
     popular: false
