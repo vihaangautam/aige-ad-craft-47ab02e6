@@ -1,4 +1,4 @@
-import { memo, useState } from 'react';
+import { memo, useState, useRef } from 'react';
 import { Handle, Position, NodeProps, Node } from '@xyflow/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,6 +24,7 @@ interface StoryNodeData {
   optionB?: MediaOption;
   onImportFromWorkspace?: (nodeId: string, option: 'A' | 'B') => void;
   onDelete?: (nodeId: string) => void;
+  onUpdate?: (nodeId: string, option: 'optionA' | 'optionB', value: MediaOption | undefined) => void;
   [key: string]: any;
 }
 
@@ -33,10 +34,9 @@ export const StoryNode = memo(function StoryNodeComponent({
   data,
   id,
 }: NodeProps<StoryFlowNode>) {
-  const [optionA, setOptionA] = useState<MediaOption | undefined>(data.optionA);
-  const [optionB, setOptionB] = useState<MediaOption | undefined>(data.optionB);
   const [previewVideo, setPreviewVideo] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
+  const fileInputARef = useRef<HTMLInputElement>(null);
 
   const getNodeColor = (type: string) => {
     switch (type) {
@@ -74,7 +74,11 @@ export const StoryNode = memo(function StoryNodeComponent({
         filename: file.name,
         thumbnail: URL.createObjectURL(file)
       };
-      setOptionA(newOption);
+      if (data.onUpdate) {
+        data.onUpdate(id, 'optionA', newOption);
+      }
+      // Reset input so same file can be uploaded again
+      event.target.value = '';
     }
   };
 
@@ -84,14 +88,16 @@ export const StoryNode = memo(function StoryNodeComponent({
     }
   };
 
-  const handlePreviewVideo = (option: MediaOption) => {
+  const handlePreviewVideo = (option: any) => {
     if (option.thumbnail) {
       setPreviewVideo(option.thumbnail);
     }
   };
 
   const handleRemoveOptionB = () => {
-    setOptionB(undefined);
+    if (data.onUpdate) {
+      data.onUpdate(id, 'optionB', undefined);
+    }
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -108,18 +114,18 @@ export const StoryNode = memo(function StoryNodeComponent({
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(false);
-    
     try {
-      const data = JSON.parse(e.dataTransfer.getData('application/json'));
-      if (data.type === 'workspace-asset') {
-        // Simulate asset assignment (in real implementation, this would call a parent function)
+      const dropped = JSON.parse(e.dataTransfer.getData('application/json'));
+      if (dropped.type === 'workspace-asset') {
         const newOption: MediaOption = {
           type: 'workspace-import',
-          filename: `Asset_${data.assetId}.mp4`,
-          thumbnail: `https://images.unsplash.com/photo-1611077541120-4e12cffbcec7?w=400&h=300&fit=crop&q=80&auto=format&sig=${Math.random()}`,
-          assetId: data.assetId,
+          filename: `Asset_${dropped.assetId}.mp4`,
+          thumbnail: `https://images.unsplash.com/photo-1751076547771-ff3a1e5267a4?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D`,
+          assetId: dropped.assetId,
         };
-        setOptionB(newOption);
+        if (data.onUpdate) {
+          data.onUpdate(id, 'optionB', newOption);
+        }
       }
     } catch (error) {
       console.error('Error handling drop:', error);
@@ -166,106 +172,75 @@ export const StoryNode = memo(function StoryNodeComponent({
               <div className="border border-gray-200 rounded-lg p-3 bg-white">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium text-gray-700">Option A</span>
-                  {optionA && (
+                  {data.optionA && data.optionA.filename && (
                     <Badge variant="secondary" className="text-xs bg-green-100 text-green-700">
                       Attached
                     </Badge>
                   )}
                 </div>
-                
-                {optionA ? (
-                  <div className="flex items-center gap-2">
-                    <div 
-                      className="w-12 h-12 bg-gray-100 rounded border flex items-center justify-center cursor-pointer hover:bg-gray-200"
-                      onClick={() => handlePreviewVideo(optionA)}
-                    >
-                      <Play className="w-4 h-4 text-gray-600" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs text-gray-600 truncate">{optionA.filename}</p>
-                      <p className="text-xs text-blue-600">Click to preview</p>
-                    </div>
-                  </div>
-                ) : (
-                  <div>
-                    <input
-                      type="file"
-                      accept="video/*,audio/*"
-                      onChange={handleUploadOptionA}
-                      className="hidden"
-                      id={`upload-a-${id}`}
-                    />
-                    <label htmlFor={`upload-a-${id}`}>
-                      <Button size="sm" variant="outline" className="w-full border-blue-300 text-blue-700 hover:bg-blue-50" asChild>
-                        <span className="cursor-pointer">
-                          <Upload className="w-3 h-3 mr-1" />
-                          Upload from Files
-                        </span>
-                      </Button>
-                    </label>
-                  </div>
-                )}
+                <div className="flex flex-col gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => fileInputARef.current?.click()}
+                    className="hover:bg-gray-100 cursor-pointer transition-all px-4 py-2"
+                  >
+                    📁 Upload from Files
+                  </Button>
+                  <input
+                    ref={fileInputARef}
+                    id={`file-input-a-${id}`}
+                    type="file"
+                    accept="video/*"
+                    style={{ display: 'none' }}
+                    onChange={handleUploadOptionA}
+                  />
+                  {data.optionA && data.optionA.filename && (
+                    <>
+                      <p className="text-xs text-gray-600 truncate">{data.optionA.filename}</p>
+                      {data.optionA.thumbnail && (
+                        <video controls src={data.optionA.thumbnail} className="w-full mt-2 rounded" style={{ maxHeight: 120 }} />
+                      )}
+                    </>
+                  )}
+                </div>
               </div>
 
               {/* Option B - Import from Workspace */}
-              <div 
-                className={`border rounded-lg p-3 bg-white transition-colors ${
-                  isDragOver ? 'border-purple-400 bg-purple-50' : 'border-gray-200'
-                }`}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
+              <div
+                className={`border border-gray-200 rounded-lg p-3 bg-white mt-4 ${isDragOver ? 'ring-2 ring-purple-400 bg-purple-50' : ''}`}
+                onDragOver={e => { e.preventDefault(); setIsDragOver(true); }}
+                onDragLeave={e => { e.preventDefault(); setIsDragOver(false); }}
                 onDrop={handleDrop}
+                style={{ pointerEvents: 'auto' }}
               >
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium text-gray-700">Option B</span>
-                  {optionB && (
-                    <div className="flex items-center gap-1">
-                      <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700">
-                        From Workspace
-                      </Badge>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-6 w-6 p-0 hover:bg-red-100"
-                        onClick={handleRemoveOptionB}
-                      >
-                        <X className="w-3 h-3 text-red-500" />
-                      </Button>
-                    </div>
+                  {data.optionB && data.optionB.filename && (
+                    <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700">
+                      From Workspace
+                    </Badge>
                   )}
                 </div>
-                
-                {optionB ? (
-                  <div className="flex items-center gap-2">
-                    <div 
-                      className="w-12 h-12 bg-gray-100 rounded border flex items-center justify-center cursor-pointer hover:bg-gray-200"
-                      onClick={() => handlePreviewVideo(optionB)}
-                    >
-                      <Play className="w-4 h-4 text-gray-600" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs text-gray-600 truncate">{optionB.filename}</p>
-                      <p className="text-xs text-purple-600">Click to preview</p>
-                    </div>
-                  </div>
-                ) : (
-                  <div>
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
-                      className="w-full border-purple-300 text-purple-700 hover:bg-purple-50"
-                      onClick={() => handleImportFromWorkspace('B')}
-                    >
-                      <Archive className="w-3 h-3 mr-1" />
-                      Import from Workspace
-                    </Button>
-                    {isDragOver && (
-                      <p className="text-xs text-purple-600 mt-1 text-center">
-                        Drop asset here to assign
-                      </p>
-                    )}
-                  </div>
-                )}
+                <div className="flex flex-col gap-2">
+                  <Button
+                    variant="secondary"
+                    onClick={() => handleImportFromWorkspace('B')}
+                    className="hover:bg-gray-100 cursor-pointer transition-all px-4 py-2"
+                  >
+                    🗂 Import from Workspace
+                  </Button>
+                  {data.optionB && data.optionB.filename && (
+                    <>
+                      <p className="text-xs text-gray-600 truncate">{data.optionB.filename}</p>
+                      {data.optionB.thumbnail && (
+                        <img src={data.optionB.thumbnail} alt="thumbnail" className="w-full mt-2 rounded" style={{ maxHeight: 80 }} />
+                      )}
+                      {data.optionB.assetId && (
+                        <p className="text-xs text-gray-400">Asset ID: {data.optionB.assetId}</p>
+                      )}
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           )}

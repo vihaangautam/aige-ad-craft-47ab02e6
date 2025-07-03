@@ -10,6 +10,8 @@ import {
   Connection,
   Edge,
   Node,
+  useReactFlow,
+  ReactFlowProvider,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,6 +23,8 @@ import { WorkspaceDrawer } from './WorkspaceDrawer';
 import { GeneratedAsset } from './WorkspaceModal';
 import { useToast } from '@/hooks/use-toast';
 import { scenesAPI, scriptAPI, getUserIdFromToken } from '@/lib/auth';
+import { useFlow } from "./FlowContext";
+import { GameNode } from './GameNode';
 
 interface StoryNodeData {
   nodeNumber: number;
@@ -67,6 +71,7 @@ interface StoryFlowBuilderProps {
 const nodeTypes = {
   storyNode: StoryNode,
   choice: ChoicePointNode,
+  game: GameNode,
 };
 
 const initialNodes: Node[] = [
@@ -96,6 +101,8 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
   const [isFlowSaved, setIsFlowSaved] = useState(false);
   const [isGeneratingScript, setIsGeneratingScript] = useState(false);
   const { toast } = useToast();
+  const flowCtx = useFlow();
+  const { fitView } = useReactFlow();
 
   // Center the canvas on first load
   useEffect(() => {
@@ -109,6 +116,12 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
 
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    if (nodes.length > 0) {
+      fitView({ duration: 400 });
+    }
+  }, [nodes, fitView]);
 
   const validateConnection = (connection: Connection): boolean => {
     const sourceNode = nodes.find(node => node.id === connection.source);
@@ -407,17 +420,6 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
     }
   };
 
-  // Update existing nodes to include the callbacks
-  const nodesWithCallbacks = nodes.map(node => ({
-    ...node,
-    data: {
-      ...node.data,
-      onImportFromWorkspace: node.type === 'storyNode' ? handleImportFromWorkspace : node.data.onImportFromWorkspace,
-      onDelete: handleDeleteNode,
-      onUpdate: node.type === 'choice' ? handleUpdateChoiceOption : node.data.onUpdate,
-    }
-  }));
-
   const sceneCount = getSceneCount();
   const isSceneLimitReached = sceneCount >= 5;
   
@@ -662,6 +664,35 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
     window.location.href = '/preview';
   };
 
+  // Remove context sync from handleNodesChange
+  const handleNodesChange = useCallback((changes) => {
+    onNodesChange(changes);
+  }, [onNodesChange]);
+
+  // Add onNodeDragStop to sync to context only after drag
+  const handleNodeDragStop = useCallback((event, node) => {
+    if (flowCtx.isStaticTemplate) {
+      flowCtx.setNodes((nds) => nds.map((n) => n.id === node.id ? { ...n, position: node.position } : n));
+    }
+  }, [flowCtx]);
+
+  // After all handler functions (handleImportFromWorkspace, handleDeleteNode, handleUpdateChoiceOption)
+  const injectCallbacks = (node: Node) => ({
+    ...node,
+    data: {
+      ...node.data,
+      onImportFromWorkspace: node.type === 'storyNode' ? handleImportFromWorkspace : node.data.onImportFromWorkspace,
+      onDelete: handleDeleteNode,
+      onUpdate: node.type === 'choice' ? handleUpdateChoiceOption : node.data.onUpdate,
+    }
+  });
+  const useStatic = flowCtx.isStaticTemplate;
+  const nodesToUse = useStatic ? flowCtx.nodes : nodes;
+  const edgesToUse = useStatic ? flowCtx.edges : edges;
+  const nodesWithCallbacksToUse = useStatic
+    ? flowCtx.nodes.map(injectCallbacks)
+    : nodes.map(injectCallbacks);
+
   return (
     <div className="h-screen flex flex-col animate-fade-in-up">
       {/* Header */}
@@ -741,22 +772,34 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
       </div>
 
       {/* Main Canvas */}
-      <div className="flex-1 relative">        
-        <ReactFlow
-          nodes={nodesWithCallbacks}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          nodeTypes={nodeTypes}
-          fitView
-          className="bg-gray-50"
-          fitViewOptions={{ padding: 0.2 }}
-        >
-          <Controls />
-          <MiniMap />
-          <Background color="#aaa" gap={16} />
-        </ReactFlow>
+      <div className="flex-1 relative">
+        <ReactFlowProvider>
+          <ReactFlow
+            nodes={nodesWithCallbacksToUse}
+            edges={edgesToUse}
+            onNodesChange={handleNodesChange}
+            onNodeDragStop={handleNodeDragStop}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            nodeTypes={nodeTypes}
+            fitView
+            panOnDrag={true}
+            panOnScroll={true}
+            zoomOnScroll={true}
+            zoomOnPinch={true}
+            minZoom={0.2}
+            maxZoom={2}
+            nodesDraggable={true}
+            nodesConnectable={true}
+            elementsSelectable={true}
+            className="bg-gray-50 cursor-black"
+            fitViewOptions={{ padding: 0.2 }}
+          >
+            <Controls />
+            <MiniMap />
+            <Background color="#eee" gap={16} />
+          </ReactFlow>
+        </ReactFlowProvider>
       </div>
 
       {/* Bottom Toolbar - Project Actions */}

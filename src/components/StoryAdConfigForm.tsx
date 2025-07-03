@@ -4,11 +4,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { X, ArrowLeft, ArrowRight } from "lucide-react";
 import { configsAPI } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
+import { useFlow } from "./FlowContext";
+import { defaultNodes, defaultEdges } from "./staticFlowTemplate";
 
 interface StoryAdConfigFormProps {
   onBack: () => void;
@@ -20,10 +21,9 @@ export function StoryAdConfigForm({ onBack, onNext }: StoryAdConfigFormProps) {
   const [tone, setTone] = useState("");
   const [elements, setElements] = useState<string[]>([]);
   const [newElement, setNewElement] = useState("");
-  const [enableARFilters, setEnableARFilters] = useState(true);
-  const [includeMiniGame, setIncludeMiniGame] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { setNodes, setEdges, setIsStaticTemplate } = useFlow();
 
   const toneOptions = [
     { value: "emotional", label: "Emotional" },
@@ -68,8 +68,6 @@ export function StoryAdConfigForm({ onBack, onNext }: StoryAdConfigFormProps) {
         theme_prompt: themePrompt,
         tone,
         characters_or_elements: finalElements.join(', '),
-        enable_ar_filters: enableARFilters,
-        include_mini_game: includeMiniGame,
       };
 
       await configsAPI.create(configData);
@@ -99,6 +97,9 @@ export function StoryAdConfigForm({ onBack, onNext }: StoryAdConfigFormProps) {
   const handleNext = async () => {
     const success = await saveAdConfiguration();
     if (success) {
+      setNodes(defaultNodes);
+      setEdges(defaultEdges);
+      setIsStaticTemplate(true);
       onNext();
     }
   };
@@ -173,35 +174,6 @@ export function StoryAdConfigForm({ onBack, onNext }: StoryAdConfigFormProps) {
                 ))}
               </div>
             )}
-          </div>
-        </div>
-
-        {/* Toggles */}
-        <div className="space-y-6">
-          <h3 className="text-lg font-semibold text-black">Additional Features</h3>
-
-          <div className="flex items-center justify-between p-4 rounded-lg border border-gray-200 bg-gray-50">
-            <div className="space-y-1">
-              <Label className="text-base font-medium text-black">Enable AR Effects</Label>
-              <p className="text-sm text-gray-600">Add interactive AR visual effects to your story</p>
-            </div>
-            <Switch
-              checked={enableARFilters}
-              onCheckedChange={setEnableARFilters}
-              className="data-[state=checked]:bg-yellow-400"
-            />
-          </div>
-
-          <div className="flex items-center justify-between p-4 rounded-lg border border-gray-200 bg-gray-50">
-            <div className="space-y-1">
-              <Label className="text-base font-medium text-black">Include Mini Game Module</Label>
-              <p className="text-sm text-gray-600">Add gamification elements to increase engagement</p>
-            </div>
-            <Switch
-              checked={includeMiniGame}
-              onCheckedChange={setIncludeMiniGame}
-              className="data-[state=checked]:bg-yellow-400"
-            />
           </div>
         </div>
       </div>

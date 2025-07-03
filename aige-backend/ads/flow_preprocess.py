@@ -12,7 +12,7 @@ def preprocess_flow_for_script(flow):
         edges = flow['edges']
     elif isinstance(flow, list):
         # Assume flat list of nodes, no edges (not supported for merging)
-        return [node for node in flow if node.get('type') == 'scene']
+        return [dict(node, node_type=node.get('type') or node.get('data', {}).get('nodeType')) for node in flow if node.get('type') == 'scene']
     else:
         return []
 
@@ -31,6 +31,7 @@ def preprocess_flow_for_script(flow):
         node_id = str(node.get('id'))
         if node_type in ('scene', 'Scene', 'storyNode'):
             scene_obj = dict(node)  # shallow copy
+            scene_obj['node_type'] = node_type  # Add node_type field
             # Check if this scene leads to a choice_point
             next_ids = outgoing.get(node_id, [])
             if next_ids:

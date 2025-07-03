@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Sparkles, Camera, Gamepad2, Image, ArrowRight, ArrowLeft } from "lucide-react";
 import { StoryAdConfigForm } from "@/components/StoryAdConfigForm";
 import { StoryFlowBuilder } from "@/components/StoryFlowBuilder";
+import { FlowProvider } from "@/components/FlowContext";
+import StoryFlowBuilderWrapper from "@/components/StoryFlowBuilderWrapper";
 
 interface CreateAdPageProps {
   onNavigate: (path: string) => void;
@@ -162,7 +163,7 @@ export function CreateAdPage({ onNavigate }: CreateAdPageProps) {
   const renderStep3 = () => {
     if (selectedAdType === "immersive-story") {
       return (
-        <StoryFlowBuilder 
+        <StoryFlowBuilderWrapper 
           onBack={handleBack}
           onNext={handleNext}
         />
@@ -191,30 +192,32 @@ export function CreateAdPage({ onNavigate }: CreateAdPageProps) {
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 animate-fade-in-up">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-black mb-2">Create New AIGE Ad</h1>
-          <p className="text-gray-600">Build your AR-powered interactive ad experience</p>
+    <FlowProvider>
+      <div className="max-w-6xl mx-auto space-y-8 animate-fade-in-up">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-black mb-2">Create New AIGE Ad</h1>
+            <p className="text-gray-600">Build your AR-powered interactive ad experience</p>
+          </div>
+          <Button 
+            variant="outline" 
+            onClick={handleBack}
+            className="border-gray-300 hover:border-yellow-400"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back
+          </Button>
         </div>
-        <Button 
-          variant="outline" 
-          onClick={handleBack}
-          className="border-gray-300 hover:border-yellow-400"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back
-        </Button>
+
+        {/* Step Indicator */}
+        {renderStepIndicator()}
+
+        {/* Step Content */}
+        {currentStep === 1 && renderStep1()}
+        {currentStep === 2 && renderStep2()}
+        {currentStep === 3 && renderStep3()}
       </div>
-
-      {/* Step Indicator */}
-      {renderStepIndicator()}
-
-      {/* Step Content */}
-      {currentStep === 1 && renderStep1()}
-      {currentStep === 2 && renderStep2()}
-      {currentStep === 3 && renderStep3()}
-    </div>
+    </FlowProvider>
   );
 }

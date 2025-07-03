@@ -40,3 +40,7 @@
 .read-the-docs {
   color: #888;
 }
+
+.cursor-black {
+  cursor: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAgMAAABUnF3AAAAABlBMVEUAAAD///+l2Z/dAAAAAXRSTlMAQObYZgAAADtJREFUCNdjYGBgZGJgYGBgYGBg+M8ABQwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwAAAwA+QwQn2QAAAABJRU5ErkJggg==') 0 0, pointer;
+}
