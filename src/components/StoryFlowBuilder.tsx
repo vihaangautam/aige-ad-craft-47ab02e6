@@ -90,6 +90,15 @@ const initialNodes: Node[] = [
 
 const initialEdges: Edge[] = [];
 
+type OptionData = {
+  filename?: string;
+  file?: File;
+  thumbnail?: string;
+  videoURL?: string;
+  video_url?: string;
+  assetId?: string;
+};
+
 export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
@@ -423,95 +432,65 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
   const sceneCount = getSceneCount();
   const isSceneLimitReached = sceneCount >= 5;
   
-  type OptionData = {
-    filename?: string;
-    file?: File;
-    thumbnail?: string;
-    videoURL?: string;
-  };
-
   const handleSaveFlow = async () => {
     try {
-      const scenesToSend = nodes
+      // Build scenes array for preview
+      const scenesForPreview = nodes
         .filter((node) => node.data.nodeType === 'Scene')
         .map((node) => {
-          const optionA = node.data.optionA as OptionData;
-          const optionB = node.data.optionB as OptionData;
-
-          const getVideoURL = (option: OptionData): string => {
-            if (option?.file instanceof File) return URL.createObjectURL(option.file);
-            if (typeof option?.videoURL === 'string') return option.videoURL;
-            if (typeof option?.thumbnail === 'string') return option.thumbnail;
+          const optionA: OptionData = node.data.optionA || {};
+          const optionB: OptionData = node.data.optionB || {};
+          const getVideoURL = (option: OptionData) => {
+            // Always prefer videoURL, fallback to video_url, then thumbnail
+            if (option && typeof option === 'object') {
+              if (option.videoURL) return option.videoURL;
+              if (option.video_url) return option.video_url;
+              if (hasTypeProp(option) && option.thumbnail && option.type === 'upload') return option.thumbnail;
+            }
             return '';
           };
-
+          // Type guard for 'type' property
+          function hasTypeProp(opt: any): opt is { type: string } {
+            return typeof opt === 'object' && opt !== null && 'type' in opt && typeof opt.type === 'string';
+          }
+          const aURL = getVideoURL(optionA);
+          const bURL = getVideoURL(optionB);
+          if (!aURL && !bURL) {
+            console.warn(`No videoURL found for node ${node.id} (${node.data.title})`);
+          } else {
+            console.log(`Node ${node.id} videoURLs:`, { optionA: aURL, optionB: bURL });
+          }
           return {
-            localId: node.id,
-            title: String(node.data.title ?? 'Untitled'),
-            description: node.data.description || '',
-            label_a: optionA?.filename || 'Option A',
-            video_url_a: getVideoURL(optionA),
-            label_b: optionB?.filename || 'Option B',
-            video_url_b: getVideoURL(optionB),
-            next_scene_a_local: getNextSceneId(node.id, 'A'),
-            next_scene_b_local: getNextSceneId(node.id, 'B'),
+            id: node.id,
+            title: node.data.title,
+            optionA: {
+              label: optionA.filename || 'Option A',
+              videoURL: aURL,
+              nextSceneId: getNextSceneId(node.id, 'A'),
+            },
+            optionB: {
+              label: optionB.filename || 'Option B',
+              videoURL: bURL,
+              nextSceneId: getNextSceneId(node.id, 'B'),
+            },
           };
         });
-
-      // Step 1: POST all scenes and get their DB IDs
-      const idMap: { [localId: string]: number } = {};
-
-      for (let scene of scenesToSend) {
-        const res = await scenesAPI.create({
-          title: scene.title,
-          description: scene.description,
-          label_a: scene.label_a,
-          video_url_a: scene.video_url_a,
-          label_b: scene.label_b,
-          video_url_b: scene.video_url_b,
-          user: getUserIdFromToken(),
-        });
-        idMap[scene.localId] = res.data.id;
-      }
-
-      // Step 2: PATCH next_scene_* links
-      for (let scene of scenesToSend) {
-        const dbId = idMap[scene.localId];
-        const payload: any = {};
-
-        if (scene.next_scene_a_local && idMap[scene.next_scene_a_local]) {
-          payload.next_scene_a = idMap[scene.next_scene_a_local];
-        }
-        if (scene.next_scene_b_local && idMap[scene.next_scene_b_local]) {
-          payload.next_scene_b = idMap[scene.next_scene_b_local];
-        }
-
-        if (Object.keys(payload).length > 0) {
-          await scenesAPI.update(dbId.toString(), payload);
-        }
-      }
-
-      // Store flow data for script generation
       const flowData = {
-        scenes: scenesToSend,
-        openingSceneId: '1',
-        nodes: nodes,
-        edges: edges
+        scenes: scenesForPreview,
+        openingSceneId: scenesForPreview.length > 0 ? scenesForPreview[0].id : '',
       };
       localStorage.setItem('aige_current_flow', JSON.stringify(flowData));
       setIsFlowSaved(true);
-
       toast({
         title: 'Success',
         description: 'Story flow saved successfully!',
       });
-
-      console.log('✅ Saved all scenes to backend', idMap);
-    } catch (err: any) {
+      console.log('✅ Saved preview flow to localStorage', flowData);
+    } catch (err) {
       console.error('❌ Save error:', err);
       toast({
         title: 'Save Failed',
-        description: err.response?.data?.detail || 'Failed to save the story flow to the server.',
+        description: 'Failed to save the story flow to localStorage.',
         variant: 'destructive',
       });
     }
@@ -660,7 +639,8 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
     }
   };
 
-  const handleSeePreview = () => {
+  const handleSeePreview = async () => {
+    await handleSaveFlow();
     window.location.href = '/preview';
   };
 
@@ -676,6 +656,22 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
     }
   }, [flowCtx]);
 
+  const handleUpdateNodeOption = useCallback((nodeId: string, optionKey: 'optionA' | 'optionB', value: OptionData | undefined) => {
+    setNodes(prevNodes =>
+      prevNodes.map(node =>
+        node.id === nodeId
+          ? {
+              ...node,
+              data: {
+                ...node.data,
+                [optionKey]: value ? { ...value } : undefined,
+              },
+            }
+          : node
+      )
+    );
+  }, [setNodes]);
+
   // After all handler functions (handleImportFromWorkspace, handleDeleteNode, handleUpdateChoiceOption)
   const injectCallbacks = (node: Node) => ({
     ...node,
@@ -683,7 +679,7 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
       ...node.data,
       onImportFromWorkspace: node.type === 'storyNode' ? handleImportFromWorkspace : node.data.onImportFromWorkspace,
       onDelete: handleDeleteNode,
-      onUpdate: node.type === 'choice' ? handleUpdateChoiceOption : node.data.onUpdate,
+      onUpdate: node.type === 'storyNode' ? handleUpdateNodeOption : node.data.onUpdate,
     }
   });
   const useStatic = flowCtx.isStaticTemplate;

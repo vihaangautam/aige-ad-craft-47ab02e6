@@ -13,6 +13,7 @@ interface MediaOption {
   thumbnail?: string;
   filename?: string;
   assetId?: string;
+  videoURL?: string;
 }
 
 interface StoryNodeData {
@@ -37,6 +38,7 @@ export const StoryNode = memo(function StoryNodeComponent({
   const [previewVideo, setPreviewVideo] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputARef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
 
   const getNodeColor = (type: string) => {
     switch (type) {
@@ -65,20 +67,44 @@ export const StoryNode = memo(function StoryNodeComponent({
     }
   };
 
-  const handleUploadOptionA = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUploadOptionA = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && (file.type.startsWith('video/') || file.type.startsWith('audio/'))) {
-      const newOption: MediaOption = {
-        type: 'upload',
-        file,
-        filename: file.name,
-        thumbnail: URL.createObjectURL(file)
-      };
-      if (data.onUpdate) {
-        data.onUpdate(id, 'optionA', newOption);
+      setUploading(true);
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        const token = localStorage.getItem('access');
+        const response = await fetch('http://localhost:8000/ads/upload_video/', {
+          method: 'POST',
+          body: formData,
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+        });
+        if (!response.ok) {
+          throw new Error('Upload failed');
+        }
+        const dataResp = await response.json();
+        let videoURL = dataResp.video_url;
+        if (videoURL && !videoURL.startsWith('http')) {
+          videoURL = `http://localhost:8000${videoURL.startsWith('/') ? '' : '/'}${videoURL}`;
+        }
+        const newOption: MediaOption = {
+          type: 'upload',
+          file,
+          filename: file.name,
+          thumbnail: URL.createObjectURL(file),
+          videoURL,
+        };
+        if (data.onUpdate) {
+          data.onUpdate(id, 'optionA', newOption);
+        }
+      } catch (error) {
+        alert('Video upload failed. Please try again.');
+        console.error(error);
+      } finally {
+        setUploading(false);
+        event.target.value = '';
       }
-      // Reset input so same file can be uploaded again
-      event.target.value = '';
     }
   };
 
@@ -179,26 +205,48 @@ export const StoryNode = memo(function StoryNodeComponent({
                   )}
                 </div>
                 <div className="flex flex-col gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => fileInputARef.current?.click()}
-                    className="hover:bg-gray-100 cursor-pointer transition-all px-4 py-2"
-                  >
-                    📁 Upload from Files
-                  </Button>
-                  <input
-                    ref={fileInputARef}
-                    id={`file-input-a-${id}`}
-                    type="file"
-                    accept="video/*"
-                    style={{ display: 'none' }}
-                    onChange={handleUploadOptionA}
-                  />
-                  {data.optionA && data.optionA.filename && (
+                  {/* If video uploaded, show preview and Replace button */}
+                  {data.optionA && data.optionA.videoURL ? (
                     <>
-                      <p className="text-xs text-gray-600 truncate">{data.optionA.filename}</p>
-                      {data.optionA.thumbnail && (
-                        <video controls src={data.optionA.thumbnail} className="w-full mt-2 rounded" style={{ maxHeight: 120 }} />
+                      <video controls src={data.optionA.videoURL} className="w-full mt-2 rounded" style={{ maxHeight: 120 }} />
+                      <p className="text-xs text-gray-600 truncate mt-2">{data.optionA.filename}</p>
+                      <Button
+                        variant="outline"
+                        onClick={() => fileInputARef.current?.click()}
+                        className="hover:bg-gray-100 cursor-pointer transition-all px-4 py-2"
+                        disabled={uploading}
+                      >
+                        {uploading ? 'Uploading...' : 'Replace video'}
+                      </Button>
+                      <input
+                        ref={fileInputARef}
+                        id={`file-input-a-${id}`}
+                        type="file"
+                        accept="video/*"
+                        style={{ display: 'none' }}
+                        onChange={handleUploadOptionA}
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <Button
+                        variant="outline"
+                        onClick={() => fileInputARef.current?.click()}
+                        className="hover:bg-gray-100 cursor-pointer transition-all px-4 py-2"
+                        disabled={uploading}
+                      >
+                        {uploading ? 'Uploading...' : '📁 Upload from Files'}
+                      </Button>
+                      <input
+                        ref={fileInputARef}
+                        id={`file-input-a-${id}`}
+                        type="file"
+                        accept="video/*"
+                        style={{ display: 'none' }}
+                        onChange={handleUploadOptionA}
+                      />
+                      {data.optionA && data.optionA.filename && (
+                        <p className="text-xs text-gray-600 truncate mt-2">{data.optionA.filename}</p>
                       )}
                     </>
                   )}

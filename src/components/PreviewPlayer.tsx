@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -264,110 +263,68 @@ export function PreviewPlayer({ onExit }: PreviewPlayerProps) {
 
       {/* Video Player */}
       <div className="flex-1 flex items-center justify-center p-8">
-        <div className="max-w-4xl w-full">
-          {/* Video Error State */}
-          {videoError && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5" />
-              <span>{videoError}</span>
-              <Button 
-                onClick={() => {
-                  console.log('🔄 User clicked retry, showing available options...');
-                  setVideoError(null);
-                  setShowChoices(true);
-                }}
-                variant="outline"
-                size="sm"
-                className="ml-auto"
-              >
-                Skip to Choices
-              </Button>
-            </div>
-          )}
-
-          {/* Video Player */}
-          {currentVideoURL && !videoError && (
-            <video
-              ref={videoRef}
-              key={`${currentSceneId}-video`}
-              className="w-full aspect-video rounded-lg shadow-lg"
-              autoPlay
-              controls
-              onEnded={handleVideoEnd}
-              onLoadStart={handleVideoLoadStart}
-              onError={handleVideoError}
-              src={currentVideoURL}
-            >
-              Your browser does not support the video tag.
-            </video>
-          )}
-
-          {/* Fallback message when no video */}
-          {(!currentVideoURL || videoError) && !showChoices && (
-            <div className="w-full aspect-video rounded-lg shadow-lg bg-gray-800 flex items-center justify-center text-white">
-              <div className="text-center">
-                <AlertTriangle className="w-12 h-12 mx-auto mb-4 text-yellow-400" />
-                <p className="text-lg font-semibold mb-2">Could not load video</p>
-                <p className="text-gray-400 mb-4">The video file may be corrupted or unavailable.</p>
+        <div className="w-full flex justify-center">
+          <div
+            className="aspect-[9/16] w-full max-w-[360px] bg-black flex items-center justify-center rounded-lg shadow-lg overflow-hidden"
+          >
+            {/* Video Error State */}
+            {videoError && (
+              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 flex items-center gap-2 absolute top-4 left-1/2 -translate-x-1/2 z-10">
+                <AlertTriangle className="w-5 h-5" />
+                <span>{videoError}</span>
                 <Button 
                   onClick={() => {
-                    console.log('🔄 User clicked proceed without video');
-                    setShowChoices(true);
+                    console.log('🔄 User clicked retry, showing available options...');
                     setVideoError(null);
+                    setShowChoices(true);
                   }}
-                  className="bg-yellow-400 hover:bg-yellow-300 text-black"
+                  variant="outline"
+                  size="sm"
+                  className="ml-auto"
                 >
-                  Proceed to Choices
+                  Skip to Choices
                 </Button>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Choice Buttons */}
-          {showChoices && !isVideoPlaying && (
-            <div className="mt-8 space-y-4">
-              <h3 className="text-white text-xl font-semibold text-center mb-6">
-                What happens next?
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Option A */}
-                {currentScene.optionA.nextSceneId && (
-                  <Card 
-                    className="cursor-pointer hover:shadow-lg transition-all hover:scale-105"
-                    onClick={() => handleOptionSelect('A')}
-                  >
-                    <CardContent className="p-6 text-center">
-                      <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span className="text-white font-bold">A</span>
-                      </div>
-                      <h4 className="font-semibold text-lg mb-2">
-                        {currentScene.optionA.label}
-                      </h4>
-                      <ArrowRight className="w-5 h-5 mx-auto text-gray-400" />
-                    </CardContent>
-                  </Card>
-                )}
+            {/* Video Player */}
+            {currentVideoURL && !videoError && (
+              <video
+                ref={videoRef}
+                key={`${currentSceneId}-video`}
+                className="w-full h-full object-cover"
+                autoPlay
+                controls
+                onEnded={handleVideoEnd}
+                onLoadStart={handleVideoLoadStart}
+                onError={handleVideoError}
+                src={currentVideoURL}
+              >
+                Your browser does not support the video tag.
+              </video>
+            )}
 
-                {/* Option B */}
-                {currentScene.optionB.nextSceneId && (
-                  <Card 
-                    className="cursor-pointer hover:shadow-lg transition-all hover:scale-105"
-                    onClick={() => handleOptionSelect('B')}
+            {/* Fallback message when no video */}
+            {(!currentVideoURL || videoError) && !showChoices && (
+              <div className="w-full h-full flex items-center justify-center text-white">
+                <div className="text-center">
+                  <AlertTriangle className="w-12 h-12 mx-auto mb-4 text-yellow-400" />
+                  <p className="text-lg font-semibold mb-2">Could not load video</p>
+                  <p className="text-gray-400 mb-4">The video file may be corrupted or unavailable.</p>
+                  <Button 
+                    onClick={() => {
+                      console.log('🔄 User clicked proceed without video');
+                      setShowChoices(true);
+                      setVideoError(null);
+                    }}
+                    className="bg-yellow-400 hover:bg-yellow-300 text-black"
                   >
-                    <CardContent className="p-6 text-center">
-                      <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span className="text-white font-bold">B</span>
-                      </div>
-                      <h4 className="font-semibold text-lg mb-2">
-                        {currentScene.optionB.label}
-                      </h4>
-                      <ArrowRight className="w-5 h-5 mx-auto text-gray-400" />
-                    </CardContent>
-                  </Card>
-                )}
+                    Proceed to Choices
+                  </Button>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </div>
