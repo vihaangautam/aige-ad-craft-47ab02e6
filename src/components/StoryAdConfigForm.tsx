@@ -16,6 +16,11 @@ interface StoryAdConfigFormProps {
   onNext: () => void;
 }
 
+export interface StoryAdConfigFormProps { // Made exportable for CreateAdPage
+  onBack: () => void;
+  onNext: (adConfigId?: string) => void; // Modified to pass adConfigId
+}
+
 export function StoryAdConfigForm({ onBack, onNext }: StoryAdConfigFormProps) {
   const [themePrompt, setThemePrompt] = useState("");
   const [tone, setTone] = useState("");
@@ -70,17 +75,30 @@ export function StoryAdConfigForm({ onBack, onNext }: StoryAdConfigFormProps) {
         characters_or_elements: finalElements.join(', '),
       };
 
-      await configsAPI.create(configData);
+      const response = await configsAPI.create(configData); // Capture response
+      const newConfigId = response.data.id; // Assuming id is in response.data.id
       
-      // Store config in localStorage for the flow builder
-      localStorage.setItem('currentAdConfig', JSON.stringify(configData));
+      if (!newConfigId) {
+        console.error("Failed to get newConfigId from response:", response);
+        toast({
+          title: "Error",
+          description: "Failed to get ID from new configuration.",
+          variant: "destructive"
+        });
+        return null; // Indicate failure by returning null for the ID
+      }
+
+      // Store config in localStorage for the flow builder (include ID)
+      const configToStore = { ...configData, id: newConfigId };
+      localStorage.setItem('currentAdConfig', JSON.stringify(configToStore));
+      localStorage.setItem('currentAdConfigId', newConfigId); // Also store ID separately if needed
       
       toast({
         title: "Success",
         description: "Ad configuration saved successfully!",
       });
       
-      return true;
+      return newConfigId; // Return the new ID
     } catch (error: any) {
       console.error("Failed to save config:", error);
       toast({
@@ -88,19 +106,19 @@ export function StoryAdConfigForm({ onBack, onNext }: StoryAdConfigFormProps) {
         description: error.response?.data?.detail || "Failed to save configuration",
         variant: "destructive"
       });
-      return false;
+      return null; // Indicate failure
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleNext = async () => {
-    const success = await saveAdConfiguration();
-    if (success) {
+    const newConfigId = await saveAdConfiguration();
+    if (newConfigId) {
       setNodes(defaultNodes);
       setEdges(defaultEdges);
       setIsStaticTemplate(true);
-      onNext();
+      onNext(newConfigId); // Pass the newConfigId to the onNext callback
     }
   };
 
