@@ -129,16 +129,10 @@ export function PreviewPlayer({ onExit }: PreviewPlayerProps) {
         } else {
           // If no video, show choices immediately or exit if no more scenes
           setIsVideoPlaying(false);
-          const hasValidNextA = scene.optionA.nextSceneId;
-          const hasValidNextB = scene.optionB.nextSceneId;
-          
-          if (!hasValidNextA && !hasValidNextB) {
-            // No more scenes, exit directly
-            console.log('🎉 Story complete - no more scenes, exiting...');
-            onExit();
-          } else {
-            setShowChoices(true);
-          }
+          // If no video, always attempt to show choices.
+          // handleOptionSelect will determine if onExit should be called based on the chosen option.
+          console.log("No video for current scene. Attempting to show choices.");
+          setShowChoices(true);
         }
       } else {
         console.error('❌ Scene not found:', currentSceneId);
@@ -177,12 +171,17 @@ export function PreviewPlayer({ onExit }: PreviewPlayerProps) {
     });
     
     if (!hasValidNextA && !hasValidNextB) {
-      // Story is complete, exit directly
-      console.log('🎉 Story complete - no more scenes, exiting...');
-      onExit();
+      // This means neither option A nor B directly links to a *new* scene ID.
+      // However, the current scene itself might have defined option labels,
+      // implying choices should be presented to the user.
+      // By removing onExit(), we allow the UI to persist.
+      // setShowChoices(true) ensures that if choices are available, they are shown.
+      // handleOptionSelect will then handle onExit() if a chosen option has no nextSceneId.
+      console.log("Video ended. No direct nextSceneId for A or B. Attempting to show choices.");
+      setShowChoices(true);
     } else {
-      // Show choice buttons
-      console.log('🔀 Showing choice buttons');
+      // At least one option has a nextSceneId, so show choices.
+      console.log('🔀 Video ended. Showing choice buttons for scenes with nextSceneId.');
       setShowChoices(true);
     }
   };
