@@ -12,8 +12,9 @@ interface ChoicePointNodeData extends Record<string, unknown> {
     label: string;
     nextSceneId?: string;
   }[];
-  onUpdate?: (nodeId: string, optionIndex: number, value: string) => void;
+  onUpdate?: (nodeId: string, optionIndex: number, updatedOptionData: { label?: string; nextSceneId?: string }) => void;
   onDelete?: (nodeId: string) => void;
+  allNodes?: Node[]; // Added to populate nextSceneId dropdown
 }
 
 type ChoicePointFlowNode = Node<ChoicePointNodeData, 'choice'>;
@@ -27,8 +28,41 @@ export const ChoicePointNode = memo(function ChoicePointNodeComponent({
     data.onDelete?.(id);
   };
 
-  const updateChoiceOption = (optionIndex: number, value: string) => {
-    data.onUpdate?.(id, optionIndex, value);
+  // Handler for when an option's label changes
+  const handleLabelChange = (optionIndex: number, newLabel: string) => {
+    // Ensure options array and specific option exist before trying to access nextSceneId
+    const currentNextSceneId = data.options?.[optionIndex]?.nextSceneId;
+    data.onUpdate?.(id, optionIndex, {
+      label: newLabel,
+      nextSceneId: currentNextSceneId
+    });
+  };
+
+  // Handler for when an option's nextSceneId changes
+  const handleNextSceneChange = (optionIndex: number, newNextSceneId: string) => {
+    // Ensure options array and specific option exist before trying to access label
+    const currentLabel = data.options?.[optionIndex]?.label;
+    data.onUpdate?.(id, optionIndex, {
+      label: currentLabel,
+      nextSceneId: newNextSceneId === '' ? undefined : newNextSceneId // Store empty string as undefined
+    });
+  };
+
+  return (
+    data.onUpdate?.(id, optionIndex, {
+      label: newLabel,
+      // Preserve existing nextSceneId when only label changes
+      nextSceneId: data.options?.[optionIndex]?.nextSceneId
+    });
+  };
+
+  // Placeholder for nextSceneId change handler (to be implemented in next step)
+  const handleNextSceneChange = (optionIndex: number, newNextSceneId: string) => {
+    data.onUpdate?.(id, optionIndex, {
+      // Preserve existing label when only nextSceneId changes
+      label: data.options?.[optionIndex]?.label,
+      nextSceneId: newNextSceneId
+    });
   };
 
   return (
@@ -76,10 +110,22 @@ export const ChoicePointNode = memo(function ChoicePointNodeComponent({
               <input
                 type="text"
                 value={data.options?.[i]?.label || ''}
-                readOnly
+                onChange={(e) => handleLabelChange(i, e.target.value)}
                 placeholder={`Option ${option} text (e.g. 'Take the left door')`}
-                className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent bg-gray-100 cursor-not-allowed"
+                className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent mb-2"
               />
+              <select
+                value={data.options?.[i]?.nextSceneId || ''}
+                onChange={(e) => handleNextSceneChange(i, e.target.value)}
+                className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
+              >
+                <option value="">-- End of Path --</option>
+                {data.allNodes?.filter(n => n.id !== id && (n.type === 'storyNode' || n.type === 'choice' || n.type === 'game')).map(sceneNode => (
+                  <option key={sceneNode.id} value={sceneNode.id}>
+                    {sceneNode.data.title || `Node ${sceneNode.id}`} (ID: {sceneNode.id.substring(0,4)})
+                  </option>
+                ))}
+              </select>
             </div>
           ))}
         </div>

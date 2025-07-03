@@ -228,32 +228,45 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
     });
   }, [setNodes, setEdges, toast]);
 
-  const handleUpdateChoiceOption = useCallback((nodeId: string, optionIndex: number, value: string) => {
-    setNodes((nds) =>
-      nds.map((node) => {
-        if (node.id === nodeId && node.type === 'choice') {
-          const existingOptions = Array.isArray(node.data.options) ? node.data.options : [];
+  const handleUpdateChoiceOption = useCallback(
+    (nodeId: string, optionIndex: number, updatedOptionData: { label?: string; nextSceneId?: string }) => {
+      setNodes((nds) =>
+        nds.map((node) => {
+          if (node.id === nodeId && node.type === 'choice') {
+            const existingOptions = Array.isArray(node.data.options) ? node.data.options : [];
+            const newOptions = [...existingOptions];
 
-          // Ensure at least 2 options
-          const newOptions = [...existingOptions];
-          while (newOptions.length < 2) {
-            newOptions.push({ label: '', nextSceneId: undefined });
+            // Ensure the option exists, create if not (should ideally exist)
+            while (newOptions.length <= optionIndex) {
+              newOptions.push({ label: '', nextSceneId: undefined });
+            }
+
+            // Update the specific option
+            const currentOption = newOptions[optionIndex] || { label: '', nextSceneId: undefined };
+            newOptions[optionIndex] = {
+              label: updatedOptionData.label !== undefined ? updatedOptionData.label : currentOption.label,
+              nextSceneId: updatedOptionData.nextSceneId !== undefined ? updatedOptionData.nextSceneId : currentOption.nextSceneId,
+            };
+
+            // Ensure there are always at least two options for display purposes, even if empty
+            while (newOptions.length < 2) {
+                newOptions.push({ label: '', nextSceneId: undefined });
+            }
+
+            return {
+              ...node,
+              data: {
+                ...node.data,
+                options: newOptions,
+              },
+            };
           }
-
-          newOptions[optionIndex] = { ...newOptions[optionIndex], label: value };
-
-          return {
-            ...node,
-            data: {
-              ...node.data,
-              options: newOptions,
-            },
-          };
-        }
-        return node;
-      })
-    );
-  }, [setNodes]);
+          return node;
+        })
+      );
+    },
+    [setNodes]
+  );
 
   // Handle keyboard events for deletion
   useEffect(() => {
@@ -721,13 +734,20 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
   }, [setNodes]);
 
   // After all handler functions (handleImportFromWorkspace, handleDeleteNode, handleUpdateChoiceOption)
-  const injectCallbacks = (node: Node) => ({
+  const injectCallbacks = (node: Node): Node => ({ // Added return type for clarity
     ...node,
     data: {
       ...node.data,
       onImportFromWorkspace: node.type === 'storyNode' ? handleImportFromWorkspace : node.data.onImportFromWorkspace,
       onDelete: handleDeleteNode,
-      onUpdate: node.type === 'storyNode' ? handleUpdateNodeOption : node.data.onUpdate,
+      // Correctly assign onUpdate based on node type
+      onUpdate: node.type === 'storyNode'
+                  ? handleUpdateNodeOption
+                  : (node.type === 'choice'
+                       ? handleUpdateChoiceOption
+                       : node.data.onUpdate),
+      // Pass all current nodes to choice nodes for their nextSceneId dropdowns
+      allNodes: node.type === 'choice' ? nodes : undefined,
     }
   });
   const useStatic = flowCtx.isStaticTemplate;
