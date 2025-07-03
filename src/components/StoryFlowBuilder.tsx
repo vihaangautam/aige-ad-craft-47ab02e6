@@ -66,6 +66,7 @@ interface ChoicePointNodeData {
 interface StoryFlowBuilderProps {
   onBack: () => void;
   onNext: () => void;
+  adConfigId: string | number | null; // Added for saving/loading flow to backend
 }
 
 const nodeTypes = {
@@ -113,22 +114,58 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
   const flowCtx = useFlow();
   const { fitView } = useReactFlow();
 
-  // Center the canvas on first load
+  // Fetch existing flow data on component mount if adConfigId is present
   useEffect(() => {
-    const timer = setTimeout(() => {
-      const fitViewOptions = { 
-        padding: 0.2, 
-        includeHiddenNodes: false,
-        duration: 500 
-      };
-    }, 100);
+    const fetchFlowData = async () => {
+      if (adConfigId) {
+        try {
+          console.log(`Fetching flow data for config ID: ${adConfigId}`);
+          const response = await configsAPI.getAdConfig(adConfigId.toString()); // Corrected to use configsAPI
+          const configData = response.data;
+          if (configData && configData.nodes && configData.edges) {
+            setNodes(configData.nodes);
+            setEdges(configData.edges);
+            setIsFlowSaved(true); // Mark as saved if loaded from backend
+            toast({
+              title: "Flow Loaded",
+              description: "Existing story flow loaded from server.",
+            });
+          } else {
+            // Initialize with default if no flow data on server but adConfigId exists
+            setNodes(initialNodes);
+            setEdges(initialEdges);
+          }
+        } catch (error) {
+          console.error("Failed to fetch flow data:", error);
+          toast({
+            title: "Load Failed",
+            description: "Could not load existing story flow.",
+            variant: "destructive",
+          });
+          // Initialize with default if error
+          setNodes(initialNodes);
+          setEdges(initialEdges);
+        }
+      } else {
+        // No adConfigId, so initialize with default nodes/edges
+        setNodes(initialNodes);
+        setEdges(initialEdges);
+      }
+    };
 
-    return () => clearTimeout(timer);
-  }, []);
+    if (!flowCtx.isStaticTemplate) { // Only fetch if not using static template
+      fetchFlowData();
+    }
+  }, [adConfigId, setNodes, setEdges, toast, flowCtx.isStaticTemplate]);
 
+
+  // Center the canvas on first load or when nodes change
   useEffect(() => {
     if (nodes.length > 0) {
-      fitView({ duration: 400 });
+      const timer = setTimeout(() => {
+        fitView({ duration: 400, padding: 0.2 });
+      }, 100); // Delay to ensure nodes are rendered
+      return () => clearTimeout(timer);
     }
   }, [nodes, fitView]);
 
@@ -433,33 +470,48 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
   const isSceneLimitReached = sceneCount >= 5;
   
   const handleSaveFlow = async () => {
+    if (!adConfigId) {
+      toast({
+        title: "Save Error",
+        description: "Ad Configuration ID is missing. Cannot save flow.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Prepare flow data for backend
+    const flowDataToSave = {
+      nodes: nodes, // Save the entire nodes array
+      edges: edges, // Save the entire edges array
+    };
+
     try {
-      // Build scenes array for preview
+      await configsAPI.update(adConfigId.toString(), flowDataToSave);
+      setIsFlowSaved(true);
+      toast({
+        title: "Flow Saved",
+        description: "Your story flow has been saved to the server.",
+      });
+      console.log('✅ Flow saved to backend for adConfigId:', adConfigId, flowDataToSave);
+
+      // Also update localStorage for preview functionality if still needed
+      // Build scenes array for preview (similar to old logic, but might need adjustment based on new node structure)
       const scenesForPreview = nodes
-        .filter((node) => node.data.nodeType === 'Scene')
+        .filter((node) => node.data.nodeType === 'Scene') // This might need to be more generic if nodes/edges are directly used for preview
         .map((node) => {
           const optionA: OptionData = node.data.optionA || {};
           const optionB: OptionData = node.data.optionB || {};
           const getVideoURL = (option: OptionData) => {
-            // Always prefer videoURL, fallback to video_url, then thumbnail
             if (option && typeof option === 'object') {
               if (option.videoURL) return option.videoURL;
               if (option.video_url) return option.video_url;
-              if (hasTypeProp(option) && option.thumbnail && option.type === 'upload') return option.thumbnail;
+              // Ensure 'type' exists before checking its value
+              if ('type' in option && option.type === 'upload' && option.thumbnail) return option.thumbnail;
             }
             return '';
           };
-          // Type guard for 'type' property
-          function hasTypeProp(opt: any): opt is { type: string } {
-            return typeof opt === 'object' && opt !== null && 'type' in opt && typeof opt.type === 'string';
-          }
           const aURL = getVideoURL(optionA);
           const bURL = getVideoURL(optionB);
-          if (!aURL && !bURL) {
-            console.warn(`No videoURL found for node ${node.id} (${node.data.title})`);
-          } else {
-            console.log(`Node ${node.id} videoURLs:`, { optionA: aURL, optionB: bURL });
-          }
           return {
             id: node.id,
             title: node.data.title,
@@ -475,23 +527,23 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
             },
           };
         });
-      const flowData = {
-        scenes: scenesForPreview,
+
+      const previewFlowData = {
+        scenes: scenesForPreview, // This structure is for the preview page
         openingSceneId: scenesForPreview.length > 0 ? scenesForPreview[0].id : '',
+        // Potentially add full nodes/edges here if preview logic changes
+        rawNodes: nodes,
+        rawEdges: edges,
       };
-      localStorage.setItem('aige_current_flow', JSON.stringify(flowData));
-      setIsFlowSaved(true);
+      localStorage.setItem('aige_current_flow', JSON.stringify(previewFlowData));
+      console.log('✅ Saved preview flow to localStorage', previewFlowData);
+
+    } catch (error) {
+      console.error("Failed to save flow to backend:", error);
       toast({
-        title: 'Success',
-        description: 'Story flow saved successfully!',
-      });
-      console.log('✅ Saved preview flow to localStorage', flowData);
-    } catch (err) {
-      console.error('❌ Save error:', err);
-      toast({
-        title: 'Save Failed',
-        description: 'Failed to save the story flow to localStorage.',
-        variant: 'destructive',
+        title: "Save Failed",
+        description: "Could not save your story flow to the server.",
+        variant: "destructive",
       });
     }
   };
@@ -533,13 +585,9 @@ export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
       const flow = JSON.parse(savedFlow);
 
       // --- Ensure characters_or_elements is present and non-empty ---
-      // If config.characters_or_elements is missing or empty, try to get it from localStorage again (redundant, but safe)
-      if (!config.characters_or_elements || config.characters_or_elements.trim() === "") {
-        const parsed = JSON.parse(savedConfig);
-        if (parsed.characters_or_elements) {
-          config.characters_or_elements = parsed.characters_or_elements;
-        }
-      }
+      // The config object is already parsed from savedConfig.
+      // If characters_or_elements was missing or empty there, it will be so here.
+      // The check below is sufficient.
 
       // If still missing, show a toast and abort
       if (!config.characters_or_elements || config.characters_or_elements.trim() === "") {

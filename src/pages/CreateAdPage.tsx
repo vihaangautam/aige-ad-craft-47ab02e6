@@ -43,12 +43,16 @@ const adTypes = [
   }
 ];
 
+import { StoryAdConfigFormProps } from "@/components/StoryAdConfigForm"; // Import props type
+
 export function CreateAdPage({ onNavigate }: CreateAdPageProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedAdType, setSelectedAdType] = useState<string | null>(null);
+  const [currentAdConfigId, setCurrentAdConfigId] = useState<string | null>(null); // Added state for adConfigId
 
   const handleAdTypeSelect = (typeId: string) => {
     setSelectedAdType(typeId);
+    setCurrentAdConfigId(null); // Reset adConfigId when ad type changes
     setCurrentStep(2);
   };
 
@@ -63,7 +67,16 @@ export function CreateAdPage({ onNavigate }: CreateAdPageProps) {
     }
   };
 
-  const handleNext = () => {
+  // This function will be passed to StoryAdConfigForm's onNext
+  const handleConfigFormNext = (adConfigId?: string) => {
+    if (adConfigId) {
+      setCurrentAdConfigId(adConfigId);
+    }
+    setCurrentStep(currentStep + 1); // Move to next step (flow builder)
+  };
+
+  // This function is for general step advancement if not coming from config form
+  const handleGenericNext = () => {
     setCurrentStep(currentStep + 1);
   };
 
@@ -133,7 +146,7 @@ export function CreateAdPage({ onNavigate }: CreateAdPageProps) {
       return (
         <StoryAdConfigForm 
           onBack={handleBack}
-          onNext={handleNext}
+          onNext={handleConfigFormNext} // Use specific handler
         />
       );
     }
@@ -164,8 +177,9 @@ export function CreateAdPage({ onNavigate }: CreateAdPageProps) {
     if (selectedAdType === "immersive-story") {
       return (
         <StoryFlowBuilderWrapper 
+          adConfigId={currentAdConfigId} // Pass the adConfigId
           onBack={handleBack}
-          onNext={handleNext}
+          onNext={handleGenericNext} // Use generic handler for "Next" from flow builder
         />
       );
     }

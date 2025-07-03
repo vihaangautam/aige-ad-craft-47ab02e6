@@ -90,6 +90,8 @@ export const scenesAPI = {
 export const configsAPI = {
   list: () => apiClient.get('/configs/'),
   create: (data: any) => apiClient.post('/configs/', data),
+  getAdConfig: (id: string) => apiClient.get(`/configs/${id}/`), // Added to fetch a single AdConfig
+  update: (id: string, data: any) => apiClient.patch(`/configs/${id}/`, data), // Added to update AdConfig (for nodes/edges)
 };
 
 export const scriptAPI = {
