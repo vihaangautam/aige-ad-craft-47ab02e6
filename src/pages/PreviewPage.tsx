@@ -1,5 +1,4 @@
-
-import { PreviewPlayer } from '@/components/PreviewPlayer';
+import LinearStagePreview from '@/components/LinearStagePreview';
 import { useNavigate } from 'react-router-dom';
 
 export function PreviewPage() {
@@ -9,5 +8,5 @@ export function PreviewPage() {
     navigate('/create');
   };
 
-  return <PreviewPlayer onExit={handleExit} />;
+  return <LinearStagePreview />;
 }

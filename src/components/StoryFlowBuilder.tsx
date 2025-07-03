@@ -22,7 +22,7 @@ import { ChoicePointNode } from './ChoicePointNode';
 import { WorkspaceDrawer } from './WorkspaceDrawer';
 import { GeneratedAsset } from './WorkspaceModal';
 import { useToast } from '@/hooks/use-toast';
-import { scenesAPI, scriptAPI, getUserIdFromToken } from '@/lib/auth';
+import { scenesAPI, scriptAPI, getUserIdFromToken, configsAPI } from '@/lib/auth';
 import { useFlow } from "./FlowContext";
 import { GameNode } from './GameNode';
 
@@ -100,7 +100,7 @@ type OptionData = {
   assetId?: string;
 };
 
-export function StoryFlowBuilder({ onBack, onNext }: StoryFlowBuilderProps) {
+export function StoryFlowBuilder({ onBack, onNext, adConfigId }: StoryFlowBuilderProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [nodeIdCounter, setNodeIdCounter] = useState(2);

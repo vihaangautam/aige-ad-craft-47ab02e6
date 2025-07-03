@@ -29,8 +29,8 @@ class AdConfiguration(models.Model):
     include_mini_game = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
-    nodes = models.JSONField(null=True, blank=True)  # Added for flow builder
-    edges = models.JSONField(null=True, blank=True)  # Added for flow builder
+    nodes = models.JSONField(default=list, blank=True, null=True)
+    edges = models.JSONField(default=list, blank=True, null=True)
 
     def __str__(self):
         return f"{self.user.username}'s config"

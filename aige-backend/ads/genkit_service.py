@@ -35,21 +35,23 @@ Characters/Elements: {characters_or_elements}
 Story Flow Type: StaticTemplate6 (Scene → Choice → Scene A/B → Game → Final Scene)
 
 --- FLOW SUMMARY ---
-- Opening Scene → Choice Point → [Scene A or Scene B] → Game → Final Scene
+- Opening Scene (with embedded choice) → [Scene A or Scene B] → Shared Game → Final Scene
 
 --- STORY FLOW (JSON) ---
 {flow_json}
 
-The story flow is designed as a 5-node graph with branching logic. The user starts at an opening scene, then chooses between two options, each leading to a scene. Both branches then go through a mini-game and end in a final scene. Please ensure this structure is reflected exactly in the script. You must:
-- Follow all branches after the opening scene
-- Include all nodes (scene, game, or filter) that are connected via edges
-- For nodes of type "game", create a standard scene object with:
-    - `scene_id`: from the flow
-    - `visual`: short description of the game experience
-    - `dialogue`: immersive narration or user instruction
-    - `audio`: ambient or themed music (e.g. arcade, timer, suspenseful)
-- Even if a game node is not part of a choice, include it in the sequence between the previous and next nodes
+The story flow is designed as a 5-node graph with branching logic. The user starts at an opening scene, then chooses between two options, each leading to a scene. Both branches then go through the SAME mini-game and end in a final scene. Please ensure this structure is reflected exactly in the script. You must:
+- The JSON array must have exactly 5 objects, in this order:
+    1. Opening scene (with embedded choice logic)
+    2. Scene A (for option A)
+    3. Scene B (for option B)
+    4. Shared game scene (same for both branches)
+    5. Final scene
+- The opening scene object must include all choice logic (post_scene_choice_prompt, option_a_text, option_b_text, option_a_leads_to, option_b_leads_to).
+- DO NOT output any standalone objects of type 'choice_point', 'choice', or similar. All choice logic must be embedded in the opening scene object.
+- For the shared game, use the same scene_id for both branches, and ensure both Scene A and Scene B lead to the same game scene.
 - Ensure every valid connected path is covered: Opening → Choice → A/B Scene → Game → Final
+- Only use the provided characters or elements. Do not invent new ones.
 
 --- OUTPUT INSTRUCTIONS ---
 Return a JSON array of objects — one per scene (or scene + embedded choice). DO NOT return prose or markdown.
@@ -60,15 +62,13 @@ Each object must include:
 - `dialogue`: character lines or narration
 - `audio`: background music or sound effects
 
-If the scene leads into a choice:
+If the scene leads into a choice (only the opening scene):
 - Add:
     - `post_scene_choice_prompt`: suspenseful user-facing line
     - `option_a_text` and `option_b_text`: action-oriented, human-friendly labels
     - `option_a_leads_to` and `option_b_leads_to`: scene_ids for branching
 
-DO NOT generate standalone scripts for nodes of type `choice_point`. Instead, embed their logic into the previous scene's JSON object.
-
-⚠️ You must only use the provided characters or elements. Do not invent new ones.
+⚠️ You must NOT generate standalone scripts for nodes of type `choice_point`, `choice`, or similar. Instead, embed their logic into the opening scene's JSON object.
 ⚠️ Output must be a **clean, valid JSON array**. No markdown, no explanation.
 
 Begin. Output only the JSON array:
@@ -77,9 +77,32 @@ Begin. Output only the JSON array:
     try:
         model = genai.GenerativeModel("gemini-1.5-flash")
         response = model.generate_content(prompt)
+        script_text = response.text.strip() if hasattr(response, "text") else str(response)
 
-        # Return valid JSON response string
-        return response.text.strip() if hasattr(response, "text") else str(response)
+        # --- POST-PROCESSING: Remove any stray choice_point nodes and embed their data into the preceding scene ---
+        def fix_choice_points(script_json_str):
+            import json
+            try:
+                arr = json.loads(script_json_str)
+            except Exception:
+                return script_json_str  # If not valid JSON, return as is
+            new_arr = []
+            last_scene = None
+            for obj in arr:
+                scene_id = obj.get("scene_id") or obj.get("scene_title")
+                if scene_id and (scene_id.lower().startswith("choice") or obj.get("post_scene_choice_prompt")) and not obj.get("visual"):
+                    # This is a stray choice_point node, merge into last_scene
+                    if last_scene is not None:
+                        last_scene.update({
+                            k: v for k, v in obj.items() if k.startswith("option_") or k == "post_scene_choice_prompt"
+                        })
+                else:
+                    new_arr.append(obj)
+                    last_scene = obj
+            return json.dumps(new_arr, ensure_ascii=False)
+
+        script_text = fix_choice_points(script_text)
+        return script_text
 
     except Exception as e:
         raise RuntimeError(f"Gemini structured script generation failed: {str(e)}")
