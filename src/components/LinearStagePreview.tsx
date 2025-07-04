@@ -6,27 +6,27 @@ const stages = [
   {
     label: 'Stage 1: Opening Scene',
     type: 'video',
-    src: `${backendUrl}/media/videos/download.mp4`,
+    src: `${backendUrl}/media/videos/Untitled design.mp4`,
   },
   {
     label: 'Stage 2: Choose Your Path',
     type: 'choice',
-    options: ['Explore Product A', 'Explore Product B'],
+    options: ['Give Her a Gift', 'Host a Date Night'],
   },
   {
     label: 'Stage 3: Option-Based Video',
     type: 'video',
-    src: `${backendUrl}/media/videos/veoChocolate.mp4`, // Example, update as needed
+    src: `${backendUrl}/media/videos/Untitled design (1).mp4`, // Example, update as needed
   },
   {
     label: 'Stage 4: Game Simulation',
     type: 'video',
-    src: `${backendUrl}/media/videos/chocolate day.mp4`,
+    src: `${backendUrl}/media/videos/20250704_0057_Chocolate Memory Game_simple_compose_01jz8w3f2cf2j9bxdsbq20n14n.mp4`,
   },
   {
     label: 'Stage 5: Final Scene',
     type: 'video',
-    src: `${backendUrl}/media/videos/4458664-hd_1920_1080_24fps.mp4`,
+    src: `${backendUrl}/media/videos/Untitled design (3).mp4`,
   },
 ];
 
