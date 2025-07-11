@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -133,8 +132,8 @@ export function AnalyticsPage({ onNavigate }: AnalyticsPageProps) {
     <div className="space-y-6 animate-fade-in-up">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-black mb-2">Analytics Dashboard</h1>
-        <p className="text-gray-600">Track performance and gain insights from your AIGE campaigns</p>
+        <h1 className="text-3xl font-bold text-yellow-400 mb-2">Analytics Dashboard</h1>
+        <p className="text-gray-200">Track performance and gain insights from your AIGE campaigns</p>
       </div>
 
       {/* Summary Cards */}

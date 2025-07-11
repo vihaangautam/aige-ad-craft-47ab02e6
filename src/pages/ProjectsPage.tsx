@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -96,8 +95,8 @@ export function ProjectsPage({ onNavigate }: ProjectsPageProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-black mb-2">My Projects</h1>
-          <p className="text-gray-600">Manage your AIGE ad campaigns</p>
+          <h1 className="text-3xl font-bold text-yellow-400 mb-2">My Projects</h1>
+          <p className="text-gray-200">Manage your AIGE ad campaigns</p>
         </div>
         <Button 
           onClick={() => onNavigate("/create")}

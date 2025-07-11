@@ -104,8 +104,8 @@ export function CreateAdPage({ onNavigate }: CreateAdPageProps) {
   const renderStep1 = () => (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-black mb-2">Choose Your Ad Type</h2>
-        <p className="text-gray-600">Select the type of AR experience you want to create</p>
+        <h2 className="text-2xl font-bold text-yellow-200 mb-2">Choose Your Ad Type</h2>
+        <p className="text-gray-200">Select the type of AR experience you want to create</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -211,8 +211,8 @@ export function CreateAdPage({ onNavigate }: CreateAdPageProps) {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-black mb-2">Create New AIGE Ad</h1>
-            <p className="text-gray-600">Build your AR-powered interactive ad experience</p>
+            <h1 className="text-3xl font-bold text-yellow-400 mb-2">Create New AIGE Ad</h1>
+            <p className="text-white">Build your AR-powered interactive ad experience</p>
           </div>
           <Button 
             variant="outline" 

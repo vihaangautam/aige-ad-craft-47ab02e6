@@ -61,7 +61,18 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				'aige-yellow': '#FFD600',
+				'aige-orange': '#FFB300',
+				'aige-dark': '#181A20',
+				'aige-blue': '#232946',
+				'aige-green': '#00FFB2',
+			},
+			fontFamily: {
+				sans: ['Inter', 'Manrope', 'sans-serif'],
+			},
+			boxShadow: {
+				'aige-glow': '0 0 24px 0 #FFD60055',
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -89,8 +100,13 @@ export default {
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out'
-			}
+			},
+			scrollbar: ['rounded'],
 		}
 	},
-	plugins: [require("tailwindcss-animate")],
+	plugins: [
+		require("tailwindcss-animate"),
+		require("tailwind-scrollbar"),
+		require("tailwind-scrollbar-hide"),
+	],
 } satisfies Config;

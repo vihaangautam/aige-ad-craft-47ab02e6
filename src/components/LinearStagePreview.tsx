@@ -16,7 +16,7 @@ const stages = [
   {
     label: 'Stage 3: Option-Based Video',
     type: 'video',
-    src: `${backendUrl}/media/videos/Untitled design (1).mp4`, // Example, update as needed
+    src: `${backendUrl}/media/videos/Untitled design (1).mp4`,
   },
   {
     label: 'Stage 4: Game Simulation',
@@ -28,11 +28,14 @@ const stages = [
     type: 'video',
     src: `${backendUrl}/media/videos/Untitled design (3).mp4`,
   },
+  {
+    label: 'Stage 6: Shareable Poster',
+    type: 'poster',
+    imageSrc: `${backendUrl}/media/videos/ChatGPT Image Jul 4, 2025, 02_50_08 PM.png`,
+  },
 ];
 
 type Stage = typeof stages[number];
-
-const aspectRatio = 9 / 16;
 
 const LinearStagePreview: React.FC = () => {
   const [stageIndex, setStageIndex] = useState(0);
@@ -70,12 +73,26 @@ const LinearStagePreview: React.FC = () => {
     setVideoEnded(false);
   };
 
+  const handleShowPoster = () => {
+    setStageIndex(stages.length - 1);
+    setVideoError(false);
+    setVideoEnded(false);
+  };
+
+  const handleDownloadPoster = () => {
+    const link = document.createElement('a');
+    link.href = stages[stages.length - 1].imageSrc;
+    link.download = 'AIGE_Poster.png';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       {/* Header Bar */}
       <header className="bg-white text-black text-center py-2 px-4 shadow sticky top-0 z-10">
         <div className="flex items-center justify-between max-w-xs mx-auto">
-          {/* Back Button */}
           <button
             className="text-2xl px-2 disabled:opacity-30"
             onClick={handleBack}
@@ -87,7 +104,6 @@ const LinearStagePreview: React.FC = () => {
           <span className="flex-1 font-semibold text-base truncate">
             {stage.label}
           </span>
-          {/* Debug Toggle */}
           <button
             className="text-xs px-2 text-gray-400 hover:text-gray-700"
             onClick={() => setDebug((d) => !d)}
@@ -100,13 +116,10 @@ const LinearStagePreview: React.FC = () => {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col items-center justify-center">
-        <div
-          className="relative w-full flex flex-col items-center justify-center"
-          style={{ minHeight: 'calc(100vh - 56px)' }}
-        >
+        <div className="relative w-full flex flex-col items-center justify-center p-4">
           {/* Video Stage */}
           {stage.type === 'video' && (
-            <div className="w-full max-w-xs mx-auto aspect-[9/16] bg-black flex items-center justify-center rounded-lg overflow-hidden shadow-lg">
+            <div className="w-full max-w-xs mx-auto aspect-[9/16] bg-black flex items-center justify-center rounded-xl overflow-hidden shadow-xl">
               {!videoError ? (
                 <video
                   key={stage.src}
@@ -135,14 +148,16 @@ const LinearStagePreview: React.FC = () => {
 
           {/* Choice Stage */}
           {stage.type === 'choice' && (
-            <div className="flex flex-col items-center gap-6 w-full max-w-xs mx-auto">
-              <div className="flex flex-row gap-4 w-full justify-center mt-8">
+            <div className="w-full max-w-xs mx-auto flex flex-col items-center gap-6 aspect-[9/16] justify-center">
+              <div className="flex flex-col gap-4 w-full">
                 {stage.options.map((opt, idx) => (
                   <button
                     key={opt}
-                    className={`flex-1 px-4 py-3 rounded-lg text-lg font-medium border-2 transition-colors duration-150 ${selectedOption === (idx === 0 ? 'A' : 'B')
-                      ? 'bg-blue-600 text-white border-blue-600'
-                      : 'bg-white text-black border-gray-300 hover:border-blue-400'}`}
+                    className={`w-full px-4 py-3 rounded-lg text-lg font-medium border-2 transition-colors duration-150 ${
+                      selectedOption === (idx === 0 ? 'A' : 'B')
+                        ? 'bg-blue-600 text-white border-blue-600'
+                        : 'bg-white text-black border-gray-300 hover:border-blue-400'
+                    }`}
                     onClick={() => handleOption(idx === 0 ? 'A' : 'B')}
                   >
                     {opt}
@@ -150,20 +165,50 @@ const LinearStagePreview: React.FC = () => {
                 ))}
               </div>
               {selectedOption && (
-                <div className="text-sm text-gray-500">Selected: Option {selectedOption}</div>
+                <div className="text-sm text-gray-500">
+                  Selected: Option {selectedOption}
+                </div>
               )}
             </div>
           )}
 
+          {/* Poster Stage */}
+          {stage.type === 'poster' && (
+            <div className="w-full max-w-xs mx-auto flex flex-col items-center justify-center">
+              <div className="bg-white rounded-2xl shadow-xl p-4 w-full aspect-[9/16] flex flex-col items-center justify-between">
+                <img
+                  src={stage.imageSrc}
+                  alt="Shareable Poster"
+                  className="w-full rounded-xl object-cover mb-4 shadow"
+                  style={{ aspectRatio: '9/16' }}
+                />
+                <div className="w-full space-y-2">
+                  <button
+                    className="w-full py-2 bg-blue-600 text-white rounded-lg font-semibold shadow hover:bg-blue-700 transition"
+                    onClick={handleDownloadPoster}
+                  >
+                    Download Poster
+                  </button>
+                  <button
+                    className="w-full py-2 bg-gray-200 text-gray-800 rounded-lg font-semibold shadow hover:bg-gray-300 transition"
+                    onClick={handleReplay}
+                  >
+                    Preview Again
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Final Stage Message */}
-          {stageIndex === stages.length - 1 && videoEnded && (
+          {stageIndex === stages.length - 2 && videoEnded && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-60 rounded-lg">
               <div className="text-white text-xl font-bold mb-4">Ad Complete!</div>
               <button
                 className="px-4 py-2 bg-white text-black rounded shadow"
-                onClick={handleReplay}
+                onClick={handleShowPoster}
               >
-                Replay?
+                Show Poster
               </button>
             </div>
           )}
@@ -182,10 +227,11 @@ const LinearStagePreview: React.FC = () => {
         </button>
       </div>
 
-      {/* Optional Debug Info */}
+      {/* Debug Info */}
       {debug && (
-        <div className="fixed bottom-4 left-4 bg-white/90 text-xs p-2 rounded shadow z-30 max-w-xs">
+        <div className="fixed bottom-4 left-4 bg-white/90 text-xs p-2 rounded shadow z-30 max-w-xs leading-snug">
           <div>stageIndex: {stageIndex}</div>
+          <div>stage.type: {stage.type}</div>
           <div>selectedOption: {selectedOption ?? 'null'}</div>
           <div>videoError: {videoError ? 'true' : 'false'}</div>
         </div>
@@ -194,4 +240,4 @@ const LinearStagePreview: React.FC = () => {
   );
 };
 
-export default LinearStagePreview; 
+export default LinearStagePreview;

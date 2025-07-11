@@ -12,20 +12,18 @@ interface MetricCardProps {
 
 const MetricCard = ({ title, value, change, icon: Icon, trend }: MetricCardProps) => {
   return (
-    <Card className="hover:shadow-lg hover:shadow-yellow-400/10 transition-all duration-300 border border-gray-200">
-      <CardContent className="p-6">
+    <Card className="bg-[#1E1E24] rounded-xl shadow-sm p-0">
+      <CardContent className="p-5">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-gray-600">{title}</p>
-            <p className="text-2xl font-bold mt-1 text-black">{value}</p>
+            <p className="text-sm text-gray-400 font-medium">{title}</p>
+            <p className="text-3xl font-bold text-white mt-1">{value}</p>
             {change && (
-              <p className={`text-xs mt-1 ${trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
-                {change} from last month
-              </p>
+              <p className={`text-xs mt-1 ${trend === 'up' ? 'text-green-400' : 'text-red-400'} font-semibold`}>{change}</p>
             )}
           </div>
-          <div className="w-12 h-12 bg-yellow-400 rounded-lg flex items-center justify-center">
-            <Icon className="w-6 h-6 text-black" />
+          <div className="w-12 h-12 rounded-full flex items-center justify-center bg-gradient-to-br from-yellow-300/80 to-transparent">
+            <Icon className="w-7 h-7 text-black" />
           </div>
         </div>
       </CardContent>
