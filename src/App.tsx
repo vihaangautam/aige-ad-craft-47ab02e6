@@ -15,6 +15,7 @@ import { PreviewPage } from "@/pages/PreviewPage";
 import CreateAdEntry from "@/pages/CreateAdEntry";
 import { StoryAdConfigForm } from "@/components/StoryAdConfigForm";
 import StoryAdConfigForm2 from "@/components/StoryAdConfigForm2";
+import { StoryFlowBuilder as StoryFlowBuilder2 } from "@/components/StoryFlowBuilder2";
 
 import {
   BrowserRouter as Router,
@@ -92,10 +93,7 @@ const App = () => {
                       currentPath="/create/choice-point/builder"
                       onNavigate={(path) => window.location.href = path}
                     >
-                      <div className="p-8 text-center">
-                        <h1 className="text-2xl font-bold text-black mb-4">Choice Point Builder</h1>
-                        <p className="text-gray-600">Choice Point Builder page coming soon</p>
-                      </div>
+                      <StoryFlowBuilder2 />
                     </DashboardLayout>
                   </ProtectedRoute>
                 }
