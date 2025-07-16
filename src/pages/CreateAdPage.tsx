@@ -218,7 +218,9 @@ export function CreateAdPage({ onNavigate }: CreateAdPageProps) {
 
   const renderStep4 = () => (
     <StoryFlowBuilderWrapper
-      adConfigId={currentAdConfigId}
+      adConfigId={null} // Do not fetch from backend
+      isStaticTemplate={true} // Force static template mode
+      useChoicePointTemplate={true}
       onBack={handleBack}
       onNext={handleGenericNext}
     />

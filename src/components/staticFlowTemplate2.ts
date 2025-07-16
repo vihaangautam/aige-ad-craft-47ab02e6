@@ -50,8 +50,8 @@ export const choicePointNodes = [
     position: { x: 900, y: 100 },
     data: {
       nodeNumber: 3,
-      title: "New Scene",
-      description: "Description for scene",
+      title: "Scene A",
+      description: "Description for Scene A",
       nodeType: "Scene",
       optionA: {
         type: "upload",
@@ -80,8 +80,38 @@ export const choicePointNodes = [
     position: { x: 900, y: 400 },
     data: {
       nodeNumber: 4,
-      title: "New Scene",
-      description: "Description for scene",
+      title: "Scene B",
+      description: "Description for Scene B",
+      nodeType: "Scene",
+      optionA: {
+        type: "upload",
+        label: "Upload from Files",
+        file: null,
+        thumbnail: "",
+        filename: "",
+        videoURL: "",
+      },
+      optionB: {
+        type: "workspace-import",
+        label: "Import from Workspace",
+        assetId: "",
+        thumbnail: "",
+        filename: "",
+        videoURL: "",
+      },
+      videoA: null,
+      videoB: null,
+      uploadedFilePreviewUrl: "",
+    },
+  },
+  {
+    id: "5",
+    type: "storyNode",
+    position: { x: 1300, y: 250 },
+    data: {
+      nodeNumber: 5,
+      title: "Final Scene",
+      description: "This is the final scene where all branches converge.",
       nodeType: "Scene",
       optionA: {
         type: "upload",
@@ -108,6 +138,8 @@ export const choicePointNodes = [
 
 export const choicePointEdges = [
   { id: "e1-2", source: "1", target: "2" },
-  { id: "e2-3", source: "2", target: "3" }, // Option 1
-  { id: "e2-4", source: "2", target: "4" }, // Option 2
+  { id: "e2-3", source: "2", target: "3" }, // Option 1 (Scene A)
+  { id: "e2-4", source: "2", target: "4" }, // Option 2 (Scene B)
+  { id: "e3-5", source: "3", target: "5" }, // Scene A to Final Scene
+  { id: "e4-5", source: "4", target: "5" }, // Scene B to Final Scene
 ]; 

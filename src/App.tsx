@@ -14,7 +14,6 @@ import { SettingsPage } from "@/pages/SettingsPage";
 import { PreviewPage } from "@/pages/PreviewPage";
 import CreateAdEntry from "@/pages/CreateAdEntry";
 import { StoryAdConfigForm } from "@/components/StoryAdConfigForm";
-import ChoicePointBuilder from "@/pages/ChoicePointBuilder";
 import StoryAdConfigForm2 from "@/components/StoryAdConfigForm2";
 
 import {
@@ -93,7 +92,10 @@ const App = () => {
                       currentPath="/create/choice-point/builder"
                       onNavigate={(path) => window.location.href = path}
                     >
-                      <ChoicePointBuilder />
+                      <div className="p-8 text-center">
+                        <h1 className="text-2xl font-bold text-black mb-4">Choice Point Builder</h1>
+                        <p className="text-gray-600">Choice Point Builder page coming soon</p>
+                      </div>
                     </DashboardLayout>
                   </ProtectedRoute>
                 }
