@@ -66,7 +66,7 @@ export function CreateAdPage({ onNavigate }: CreateAdPageProps) {
   // NEW: handle template selection
   const handleTemplateSelect = (templateKey: string) => {
     setSelectedTemplate(templateKey);
-    setCurrentStep(3); // Proceed to config step
+    setCurrentStep(3); // Always go to config form after template selection
   };
 
   const handleBack = () => {
@@ -216,15 +216,29 @@ export function CreateAdPage({ onNavigate }: CreateAdPageProps) {
     );
   };
 
-  const renderStep4 = () => (
-    <StoryFlowBuilderWrapper
-      adConfigId={null} // Do not fetch from backend
-      isStaticTemplate={true} // Force static template mode
-      useChoicePointTemplate={true}
-      onBack={handleBack}
-      onNext={handleGenericNext}
-    />
-  );
+  const renderStep4 = () => {
+    if (selectedTemplate === 'choice-point') {
+      return (
+        <StoryFlowBuilderWrapper
+          adConfigId={null}
+          isStaticTemplate={true}
+          useChoicePointTemplate={true}
+          onBack={handleBack}
+          onNext={handleGenericNext}
+        />
+      );
+    }
+    // Default: show normal builder or other logic
+    return (
+      <StoryFlowBuilderWrapper
+        adConfigId={currentAdConfigId}
+        isStaticTemplate={false}
+        useChoicePointTemplate={false}
+        onBack={handleBack}
+        onNext={handleGenericNext}
+      />
+    );
+  };
 
   return (
     <FlowProvider>

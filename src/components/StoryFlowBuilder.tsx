@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect } from 'react';
+import { useCallback, useState, useEffect, useRef } from 'react';
 import {
   ReactFlow,
   MiniMap,
@@ -25,6 +25,7 @@ import { useToast } from '@/hooks/use-toast';
 import { scenesAPI, scriptAPI, getUserIdFromToken, configsAPI } from '@/lib/auth';
 import { useFlow } from "./FlowContext";
 import { GameNode } from './GameNode';
+import { choicePointNodes, choicePointEdges } from './staticFlowTemplate2';
 
 interface StoryNodeData {
   nodeNumber: number;
@@ -103,7 +104,143 @@ type OptionData = {
   assetId?: string;
 };
 
-export function StoryFlowBuilder({ onBack, onNext, adConfigId, initialNodes: propInitialNodes, initialEdges: propInitialEdges, isStaticTemplate }: StoryFlowBuilderProps) {
+export function StoryFlowBuilder({ onBack, onNext, adConfigId, initialNodes: propInitialNodes, initialEdges: propInitialEdges, isStaticTemplate, useChoicePointTemplate }: StoryFlowBuilderProps & { useChoicePointTemplate?: boolean }) {
+  const useStaticChoicePoint = isStaticTemplate && useChoicePointTemplate;
+
+  // Use useReactFlow hook for fitView (declare only once)
+  const { fitView } = useReactFlow();
+  useEffect(() => {
+    if (useStaticChoicePoint) {
+      fitView({ padding: 0.2 });
+    }
+  }, [useStaticChoicePoint, fitView]);
+
+  if (useStaticChoicePoint) {
+    // Static mode variables and handlers (not redeclared elsewhere)
+    const staticNodes = choicePointNodes;
+    const staticEdges = choicePointEdges;
+    const sceneCount = staticNodes.filter(node => node.data.nodeType === 'Scene').length;
+    const isSceneLimitReached = sceneCount >= 5;
+
+    // Handlers for static mode
+    const handleGenerateAssets = () => {
+      alert('Generate Assets (static mode): implement logic as needed.');
+    };
+    const handleOpenWorkspace = () => {
+      alert('Open Workspace (static mode): implement logic as needed.');
+    };
+    const handleSaveFlow = () => {
+      alert('Save Flow (static mode): implement logic as needed.');
+    };
+    const handleGenerateScript = () => {
+      alert('Generate Script (static mode): implement logic as needed.');
+    };
+    const handleSeePreview = () => {
+      alert('See Preview (static mode): implement logic as needed.');
+    };
+
+    // Render a fully static, read-only flow with enabled action bar
+    return (
+      <div className="h-screen flex flex-col animate-fade-in-up">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b bg-white">
+          <div>
+            <h1 className="text-3xl font-bold text-black mb-2">Story Flow Builder</h1>
+            <p className="text-gray-600">Design interactive ad experiences with branching narratives</p>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
+              Scenes: {sceneCount}/5
+            </div>
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={onBack}>
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back
+              </Button>
+              <Button className="bg-yellow-400 hover:bg-yellow-300 text-black font-semibold" onClick={onNext}>
+                Next
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Top Toolbar - Story Elements (hidden in static mode) */}
+        <div className="bg-gray-50 border-b border-gray-200 p-4">
+          <div className="mb-2">
+            <h3 className="text-sm font-medium text-gray-700">Story Elements</h3>
+          </div>
+          <div className="flex gap-3 opacity-50 pointer-events-none select-none">
+            <Button size="sm" className="bg-blue-200 text-white" disabled>
+              <Plus className="w-4 h-4 mr-2" />🎬 Scene
+            </Button>
+            <Button size="sm" className="bg-yellow-200 text-black" disabled>
+              <Plus className="w-4 h-4 mr-2" />🔀 Choice Point
+            </Button>
+            <Button size="sm" className="bg-green-200 text-white" disabled>
+              <Plus className="w-4 h-4 mr-2" />🎮 Mini Game
+            </Button>
+            <Button size="sm" className="bg-purple-200 text-white" disabled>
+              <Plus className="w-4 h-4 mr-2" />✨ AR Filter
+            </Button>
+          </div>
+        </div>
+
+        {/* Main Canvas - static, read-only, always fit to view */}
+        <div className="flex-1 relative">
+          <ReactFlowProvider>
+            <ReactFlow
+              nodes={staticNodes}
+              edges={staticEdges}
+              nodeTypes={nodeTypes}
+              fitView
+              panOnDrag={false}
+              panOnScroll={false}
+              zoomOnScroll={false}
+              zoomOnPinch={false}
+              minZoom={0.2}
+              maxZoom={2}
+              nodesDraggable={false}
+              nodesConnectable={false}
+              elementsSelectable={false}
+              className="bg-gray-50 cursor-default"
+              fitViewOptions={{ padding: 0.2 }}
+            >
+              <Controls />
+              <MiniMap />
+              <Background color="#eee" gap={16} />
+            </ReactFlow>
+          </ReactFlowProvider>
+        </div>
+
+        {/* Bottom Toolbar - Project Actions (enabled in static mode) */}
+        <div className="bg-gray-50 border-t border-gray-200 p-4">
+          <div className="mb-2">
+            <h3 className="text-sm font-medium text-gray-700">Project Actions</h3>
+          </div>
+          <div className="flex gap-3">
+            <Button onClick={handleGenerateAssets} disabled={false} size="sm" className="bg-purple-600 hover:bg-purple-700 text-white">
+              <Sparkles className="w-4 h-4 mr-2" />Generate Assets
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleOpenWorkspace} className="border-purple-300 text-purple-700 hover:bg-purple-50">
+              <Archive className="w-4 h-4 mr-2" />Open Workspace
+            </Button>
+            <Button onClick={handleSaveFlow} size="sm" className="border-yellow-400 text-yellow-700 hover:bg-yellow-50 border">
+              <Save className="w-4 h-4 mr-2" />Save Flow
+            </Button>
+            <Button onClick={handleGenerateScript} disabled={false} size="sm" className="bg-green-600 hover:bg-green-700 text-white">
+              <Sparkles className="w-4 h-4 mr-2" />Generate Script
+            </Button>
+            <Button onClick={handleSeePreview} size="sm" className="bg-yellow-400 hover:bg-yellow-300 text-black font-semibold">
+              See Preview
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const [nodes, setNodes, onNodesChange] = useNodesState(propInitialNodes || initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(propInitialEdges || initialEdges);
   const [nodeIdCounter, setNodeIdCounter] = useState(2);
@@ -115,7 +252,7 @@ export function StoryFlowBuilder({ onBack, onNext, adConfigId, initialNodes: pro
   const [isGeneratingScript, setIsGeneratingScript] = useState(false);
   const { toast } = useToast();
   const flowCtx = useFlow();
-  const { fitView } = useReactFlow();
+
 
   // Fetch existing flow data on component mount if adConfigId is present
   useEffect(() => {

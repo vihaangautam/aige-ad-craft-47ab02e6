@@ -47,7 +47,7 @@ export const choicePointNodes = [
   {
     id: "3",
     type: "storyNode",
-    position: { x: 900, y: 100 },
+    position: { x: 900, y: 80 },
     data: {
       nodeNumber: 3,
       title: "Scene A",
@@ -77,7 +77,7 @@ export const choicePointNodes = [
   {
     id: "4",
     type: "storyNode",
-    position: { x: 900, y: 400 },
+    position: { x: 900, y: 430 },
     data: {
       nodeNumber: 4,
       title: "Scene B",
