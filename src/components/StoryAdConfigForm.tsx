@@ -11,11 +11,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useFlow } from "./FlowContext";
 import { defaultNodes, defaultEdges } from "./staticFlowTemplate";
 
-interface StoryAdConfigFormProps {
-  onBack: () => void;
-  onNext: () => void;
-}
-
 export interface StoryAdConfigFormProps { // Made exportable for CreateAdPage
   onBack: () => void;
   onNext: (adConfigId?: string) => void; // Modified to pass adConfigId
@@ -125,8 +120,8 @@ export function StoryAdConfigForm({ onBack, onNext }: StoryAdConfigFormProps) {
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       <div className="text-center">
-        <h1 className="text-3xl font-bold text-black mb-2">Configure Your Story Ad</h1>
-        <p className="text-gray-600">Set up the theme, tone, and elements for your immersive AR story</p>
+        <h1 className="text-3xl font-bold text-yellow-300 mb-2">Configure Your Story Ad</h1>
+        <p className="text-gray-200">Set up the theme, tone, and elements for your immersive AR story</p>
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 p-8 space-y-8">

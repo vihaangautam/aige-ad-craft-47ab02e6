@@ -115,7 +115,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
               <h3 className="text-xl font-bold mb-2">Create New Ad</h3>
               <p className="text-black/70 text-center mb-6">Start building your AR-powered ad experience</p>
               <button
-                onClick={() => onNavigate('/create')}
+                onClick={() => onNavigate('/create/aige')}
                 className="w-full py-3 rounded-xl font-semibold bg-black text-yellow-300 hover:bg-neutral-900 transition-all duration-200 text-lg shadow hover:shadow-yellow-500/30"
               >
                 Create New

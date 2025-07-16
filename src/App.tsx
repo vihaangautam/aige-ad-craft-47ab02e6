@@ -12,6 +12,10 @@ import { AnalyticsPage } from "@/pages/AnalyticsPage";
 import AuthPage from "@/pages/AuthPage";
 import { SettingsPage } from "@/pages/SettingsPage";
 import { PreviewPage } from "@/pages/PreviewPage";
+import CreateAdEntry from "@/pages/CreateAdEntry";
+import { StoryAdConfigForm } from "@/components/StoryAdConfigForm";
+import ChoicePointBuilder from "@/pages/ChoicePointBuilder";
+import StoryAdConfigForm2 from "@/components/StoryAdConfigForm2";
 
 import {
   BrowserRouter as Router,
@@ -51,15 +55,45 @@ const App = () => {
                   </ProtectedRoute>
                 }
               />
+              {/* Remove the /create route for CreateAdEntry. Only /create/aige remains. */}
               <Route
-                path="/create"
+                path="/create/aige"
                 element={
                   <ProtectedRoute>
                     <DashboardLayout
-                      currentPath="/create"
+                      currentPath="/create/aige"
                       onNavigate={(path) => window.location.href = path}
                     >
                       <CreateAdPage onNavigate={(path) => window.location.href = path} />
+                    </DashboardLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/create/choice-point"
+                element={
+                  <ProtectedRoute>
+                    <DashboardLayout
+                      currentPath="/create/choice-point"
+                      onNavigate={(path) => window.location.href = path}
+                    >
+                      <StoryAdConfigForm2 
+                        onBack={() => window.location.href = "/"}
+                        onNext={(adConfigId) => window.location.href = "/create/choice-point/builder"}
+                      />
+                    </DashboardLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/create/choice-point/builder"
+                element={
+                  <ProtectedRoute>
+                    <DashboardLayout
+                      currentPath="/create/choice-point/builder"
+                      onNavigate={(path) => window.location.href = path}
+                    >
+                      <ChoicePointBuilder />
                     </DashboardLayout>
                   </ProtectedRoute>
                 }

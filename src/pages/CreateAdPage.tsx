@@ -7,6 +7,7 @@ import { StoryAdConfigForm } from "@/components/StoryAdConfigForm";
 import { StoryFlowBuilder } from "@/components/StoryFlowBuilder";
 import { FlowProvider } from "@/components/FlowContext";
 import StoryFlowBuilderWrapper from "@/components/StoryFlowBuilderWrapper";
+import CreateAdEntry from "./CreateAdEntry";
 
 interface CreateAdPageProps {
   onNavigate: (path: string) => void;
@@ -48,12 +49,24 @@ import { StoryAdConfigFormProps } from "@/components/StoryAdConfigForm"; // Impo
 export function CreateAdPage({ onNavigate }: CreateAdPageProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedAdType, setSelectedAdType] = useState<string | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null); // NEW: track template
   const [currentAdConfigId, setCurrentAdConfigId] = useState<string | null>(null); // Added state for adConfigId
 
   const handleAdTypeSelect = (typeId: string) => {
     setSelectedAdType(typeId);
     setCurrentAdConfigId(null); // Reset adConfigId when ad type changes
-    setCurrentStep(2);
+    // If immersive-story, go to template selection (step 2), else go to config (step 2)
+    if (typeId === "immersive-story") {
+      setCurrentStep(2);
+    } else {
+      setCurrentStep(3);
+    }
+  };
+
+  // NEW: handle template selection
+  const handleTemplateSelect = (templateKey: string) => {
+    setSelectedTemplate(templateKey);
+    setCurrentStep(3); // Proceed to config step
   };
 
   const handleBack = () => {
@@ -143,11 +156,9 @@ export function CreateAdPage({ onNavigate }: CreateAdPageProps) {
 
   const renderStep2 = () => {
     if (selectedAdType === "immersive-story") {
+      // Show template selection step
       return (
-        <StoryAdConfigForm 
-          onBack={handleBack}
-          onNext={handleConfigFormNext} // Use specific handler
-        />
+        <CreateAdEntry onSelect={handleTemplateSelect} />
       );
     }
 
@@ -175,11 +186,11 @@ export function CreateAdPage({ onNavigate }: CreateAdPageProps) {
 
   const renderStep3 = () => {
     if (selectedAdType === "immersive-story") {
+      // Optionally, you can use selectedTemplate to customize config/builder
       return (
-        <StoryFlowBuilderWrapper 
-          adConfigId={currentAdConfigId} // Pass the adConfigId
+        <StoryAdConfigForm 
           onBack={handleBack}
-          onNext={handleGenericNext} // Use generic handler for "Next" from flow builder
+          onNext={handleConfigFormNext}
         />
       );
     }
@@ -204,6 +215,14 @@ export function CreateAdPage({ onNavigate }: CreateAdPageProps) {
       </div>
     );
   };
+
+  const renderStep4 = () => (
+    <StoryFlowBuilderWrapper
+      adConfigId={currentAdConfigId}
+      onBack={handleBack}
+      onNext={handleGenericNext}
+    />
+  );
 
   return (
     <FlowProvider>
@@ -231,6 +250,7 @@ export function CreateAdPage({ onNavigate }: CreateAdPageProps) {
         {currentStep === 1 && renderStep1()}
         {currentStep === 2 && renderStep2()}
         {currentStep === 3 && renderStep3()}
+        {currentStep === 4 && renderStep4()}
       </div>
     </FlowProvider>
   );

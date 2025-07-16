@@ -67,6 +67,9 @@ interface StoryFlowBuilderProps {
   onBack: () => void;
   onNext: () => void;
   adConfigId: string | number | null; // Added for saving/loading flow to backend
+  initialNodes?: Node[];
+  initialEdges?: Edge[];
+  isStaticTemplate?: boolean;
 }
 
 const nodeTypes = {
@@ -100,9 +103,9 @@ type OptionData = {
   assetId?: string;
 };
 
-export function StoryFlowBuilder({ onBack, onNext, adConfigId }: StoryFlowBuilderProps) {
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+export function StoryFlowBuilder({ onBack, onNext, adConfigId, initialNodes: propInitialNodes, initialEdges: propInitialEdges, isStaticTemplate }: StoryFlowBuilderProps) {
+  const [nodes, setNodes, onNodesChange] = useNodesState(propInitialNodes || initialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(propInitialEdges || initialEdges);
   const [nodeIdCounter, setNodeIdCounter] = useState(2);
   const [isWorkspaceOpen, setIsWorkspaceOpen] = useState(false);
   const [isGeneratingAssets, setIsGeneratingAssets] = useState(false);
@@ -116,24 +119,30 @@ export function StoryFlowBuilder({ onBack, onNext, adConfigId }: StoryFlowBuilde
 
   // Fetch existing flow data on component mount if adConfigId is present
   useEffect(() => {
+    // If isStaticTemplate, always use the provided initial nodes/edges and do NOT fetch from backend
+    if (isStaticTemplate) {
+      setNodes(propInitialNodes || initialNodes);
+      setEdges(propInitialEdges || initialEdges);
+      return; // Do not run backend fetch logic at all
+    }
+    // Otherwise, fetch from backend as before
     const fetchFlowData = async () => {
       if (adConfigId) {
         try {
           console.log(`Fetching flow data for config ID: ${adConfigId}`);
-          const response = await configsAPI.getAdConfig(adConfigId.toString()); // Corrected to use configsAPI
+          const response = await configsAPI.getAdConfig(adConfigId.toString());
           const configData = response.data;
           if (configData && configData.nodes && configData.edges) {
             setNodes(configData.nodes);
             setEdges(configData.edges);
-            setIsFlowSaved(true); // Mark as saved if loaded from backend
+            setIsFlowSaved(true);
             toast({
               title: "Flow Loaded",
               description: "Existing story flow loaded from server.",
             });
           } else {
-            // Initialize with default if no flow data on server but adConfigId exists
-            setNodes(initialNodes);
-            setEdges(initialEdges);
+            setNodes(propInitialNodes || initialNodes);
+            setEdges(propInitialEdges || initialEdges);
           }
         } catch (error) {
           console.error("Failed to fetch flow data:", error);
@@ -142,21 +151,16 @@ export function StoryFlowBuilder({ onBack, onNext, adConfigId }: StoryFlowBuilde
             description: "Could not load existing story flow.",
             variant: "destructive",
           });
-          // Initialize with default if error
-          setNodes(initialNodes);
-          setEdges(initialEdges);
+          setNodes(propInitialNodes || initialNodes);
+          setEdges(propInitialEdges || initialEdges);
         }
       } else {
-        // No adConfigId, so initialize with default nodes/edges
-        setNodes(initialNodes);
-        setEdges(initialEdges);
+        setNodes(propInitialNodes || initialNodes);
+        setEdges(propInitialEdges || initialEdges);
       }
     };
-
-    if (!flowCtx.isStaticTemplate) { // Only fetch if not using static template
-      fetchFlowData();
-    }
-  }, [adConfigId, setNodes, setEdges, toast, flowCtx.isStaticTemplate]);
+    fetchFlowData();
+  }, [adConfigId, setNodes, setEdges, toast, isStaticTemplate, propInitialNodes, propInitialEdges]);
 
 
   // Center the canvas on first load or when nodes change
