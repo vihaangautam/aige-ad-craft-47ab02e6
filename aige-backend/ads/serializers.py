@@ -10,7 +10,7 @@ class AdConfigurationSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(read_only=True)
     class Meta:
         model = AdConfiguration
-        fields = ['id', 'user', 'theme_prompt', 'tone', 'characters_or_elements', 'enable_ar_filters', 'include_mini_game', 'created_at', 'nodes', 'edges']
+        fields = ['id', 'user', 'theme_prompt', 'tone', 'characters_or_elements', 'enable_ar_filters', 'include_mini_game', 'created_at', 'nodes', 'edges', 'template_type']
 
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:

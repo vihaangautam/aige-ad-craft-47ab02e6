@@ -64,10 +64,13 @@ export function StoryAdConfigForm({ onBack, onNext }: StoryAdConfigFormProps) {
 
     setIsLoading(true);
     try {
+      // Get template_type from localStorage (set by CreateAdPage)
+      const templateType = localStorage.getItem('selectedTemplate') || 'aige';
       const configData = {
         theme_prompt: themePrompt,
         tone,
         characters_or_elements: finalElements.join(', '),
+        template_type: templateType, // <-- Add this line
       };
 
       const response = await configsAPI.create(configData); // Capture response

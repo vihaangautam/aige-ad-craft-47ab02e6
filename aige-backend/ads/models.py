@@ -31,6 +31,7 @@ class AdConfiguration(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     nodes = models.JSONField(default=list, blank=True, null=True)
     edges = models.JSONField(default=list, blank=True, null=True)
+    template_type = models.CharField(max_length=50, default="aige")  # NEW FIELD
 
     def __str__(self):
         return f"{self.user.username}'s config"

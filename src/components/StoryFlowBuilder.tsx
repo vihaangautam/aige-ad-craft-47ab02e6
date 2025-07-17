@@ -132,8 +132,30 @@ export function StoryFlowBuilder({ onBack, onNext, adConfigId, initialNodes: pro
     const handleSaveFlow = () => {
       alert('Save Flow (static mode): implement logic as needed.');
     };
-    const handleGenerateScript = () => {
-      alert('Generate Script (static mode): implement logic as needed.');
+    const handleGenerateScript = async () => {
+      try {
+        // Get config from localStorage
+        const savedConfig = localStorage.getItem('currentAdConfig');
+        if (!savedConfig) {
+          alert('No saved config found. Please save your configuration first.');
+          return;
+        }
+        const config = JSON.parse(savedConfig);
+        // Use static nodes/edges for flow
+        const flow = { nodes: staticNodes, edges: staticEdges };
+        // Call backend API
+        const response = await scriptAPI.generate(config, flow);
+        // Show result (could be a modal, toast, or console)
+        if (response.data && response.data.script) {
+          alert('Script generated successfully! Check console for output.');
+          console.log('Generated Script:', response.data.script);
+        } else {
+          alert('Script generation failed: No script returned.');
+        }
+      } catch (error: any) {
+        alert('Script generation failed: ' + (error.response?.data?.error || error.message));
+        console.error(error);
+      }
     };
     const handleSeePreview = () => {
       alert('See Preview (static mode): implement logic as needed.');

@@ -66,6 +66,7 @@ export function CreateAdPage({ onNavigate }: CreateAdPageProps) {
   // NEW: handle template selection
   const handleTemplateSelect = (templateKey: string) => {
     setSelectedTemplate(templateKey);
+    localStorage.setItem('selectedTemplate', templateKey); // Persist selected template
     setCurrentStep(3); // Always go to config form after template selection
   };
 
