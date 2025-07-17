@@ -16,6 +16,7 @@ import CreateAdEntry from "@/pages/CreateAdEntry";
 import { StoryAdConfigForm } from "@/components/StoryAdConfigForm";
 import StoryAdConfigForm2 from "@/components/StoryAdConfigForm2";
 import { StoryFlowBuilder as StoryFlowBuilder2 } from "@/components/StoryFlowBuilder2";
+import GeneratingScreenPage from './pages/GeneratingScreenPage';
 
 import {
   BrowserRouter as Router,
@@ -40,6 +41,9 @@ const App = () => {
 
               {/* Standalone Preview Page */}
               <Route path="/preview" element={<PreviewPage />} />
+
+              {/* Generating Screen Page */}
+              <Route path="/generating" element={<GeneratingScreenPage />} />
 
               {/* Protected routes with Dashboard layout */}
               <Route
@@ -79,7 +83,7 @@ const App = () => {
                     >
                       <StoryAdConfigForm2 
                         onBack={() => window.location.href = "/"}
-                        onNext={(adConfigId) => window.location.href = "/create/choice-point/builder"}
+                        onNext={async (adConfigId) => { window.location.href = "/create/choice-point/builder"; }}
                       />
                     </DashboardLayout>
                   </ProtectedRoute>

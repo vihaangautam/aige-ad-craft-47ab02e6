@@ -10,17 +10,30 @@ def generate_structured_ad_script(config: dict, flow: dict) -> str:
     """
     Generate structured scene-by-scene interactive ad script based on the selected template.
     Supported templates: 'choice-point', 'aige'
-    Each scene must fit within 8 seconds of video and include Indian characters/dialogue.
+    Each scene must fit within 8 seconds of video and include brand integration if present.
     """
     characters_or_elements = config.get("characters_or_elements", "").strip()
     if not characters_or_elements:
         raise ValueError("Please specify at least one character or element.")
+
+    theme_prompt = config.get("theme_prompt", "")
+    brand_name = ""
+    if "blinkit" in theme_prompt.lower():
+        brand_name = "Blinkit"
 
     # Preprocess node-flow into simplified structure
     preprocessed_flow = preprocess_flow_for_script(flow)
     flow_json = json.dumps(preprocessed_flow, ensure_ascii=False)
 
     template_type = config.get("template_type", "aige")
+
+    brand_instructions = f"""
+--- BRAND INTEGRATION (IMPORTANT) ---
+- This is an ad for **{brand_name}**, so integrate the brand naturally into the narrative.
+- Include visual/product placement (e.g., {brand_name} packaging, delivery, app screen).
+- At least one dialogue or moment must mention or highlight {brand_name}.
+- Brand voice: quirky, witty, and relatable (not overly emotional).
+""" if brand_name else ""
 
     if template_type == "choice-point":
         prompt = f"""
@@ -35,17 +48,18 @@ Brand Voice: {config.get("brandVoice", "friendly")}
 Platform: {config.get("platform", "mobile")}
 Language: {config.get("language", "english")}
 Duration: {config.get("durationInSeconds", 30)} seconds
-Theme: {config.get("theme_prompt", "")}
+Theme: {theme_prompt}
 Characters/Elements: {characters_or_elements}
+{brand_instructions}
 
 --- FLOW STRUCTURE ---
 Opening Scene → Choice Point (non-video) → Scene A or Scene B
 
 --- STYLE & DIALOGUE RULES ---
-- Characters can be culturally neutral and natural (no forced Indianization).
-- Dialogue must be prioritized in the script, designed for an AI + manual voiceover pipeline.
-- Each scene must be visualized for a strict 9:16 aspect ratio and fit within ~8 seconds.
-- Dialogue should be concise, spoken-style, and fit the time limit.
+- Characters must feel natural, not exaggerated or stereotypical.
+- Dialogue must be prioritized, concise, spoken-style, and voiceover-friendly.
+- Visuals must be cinematic and formatted for strict 9:16 aspect ratio.
+- Emphasize immersive storytelling and brand presence.
 
 --- FLOW JSON ---
 {flow_json}
@@ -69,8 +83,8 @@ For the choice point (2), include:
 - `option_a_text`, `option_b_text`
 - `option_a_leads_to`, `option_b_leads_to`
 
-⚠️ DO NOT include any additional scenes, games, AR filters.
-⚠️ Must output raw valid JSON. No markdown or prose.
+⚠️ DO NOT include any additional scenes, games, or extra commentary.
+⚠️ Only return clean JSON array.
         """
     else:
         prompt = f"""
@@ -85,17 +99,18 @@ Brand Voice: {config.get("brandVoice", "friendly")}
 Platform: {config.get("platform", "mobile")}
 Language: {config.get("language", "english")}
 Duration: {config.get("durationInSeconds", 30)} seconds
-Theme: {config.get("theme_prompt", "")}
+Theme: {theme_prompt}
 Characters/Elements: {characters_or_elements}
+{brand_instructions}
 
 --- FLOW STRUCTURE ---
 Opening Scene (with embedded choice) → Scene A or Scene B → Shared Game Scene → Final Scene
 
 --- STYLE & DIALOGUE RULES ---
-- Characters can be culturally neutral and natural (no forced Indianization).
-- Dialogue must be prioritized in the script, designed for an AI + manual voiceover pipeline.
-- Each scene must be visualized for a strict 9:16 aspect ratio and fit within ~8 seconds.
-- Dialogue should be concise, spoken-style, and fit the time limit.
+- Characters must feel natural, not exaggerated or stereotypical.
+- Dialogue must be prioritized, concise, spoken-style, and voiceover-friendly.
+- Visuals must be cinematic and formatted for strict 9:16 aspect ratio.
+- Emphasize immersive storytelling and brand presence.
 
 --- FLOW JSON ---
 {flow_json}
@@ -119,8 +134,7 @@ The Opening Scene must also include:
 - `option_a_text`, `option_b_text`
 - `option_a_leads_to`, `option_b_leads_to`
 
-⚠️ No standalone choice nodes allowed.
-⚠️ Only output raw JSON. No markdown or comments.
+⚠️ Only output raw JSON. No markdown or prose.
         """
 
     try:

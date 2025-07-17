@@ -13,7 +13,7 @@ import { defaultNodes, defaultEdges } from "./staticFlowTemplate";
 
 export interface StoryAdConfigFormProps { // Made exportable for CreateAdPage
   onBack: () => void;
-  onNext: (adConfigId?: string) => void; // Modified to pass adConfigId
+  onNext: (adConfigId?: string) => Promise<void>; // Make onNext async
 }
 
 export function StoryAdConfigForm({ onBack, onNext }: StoryAdConfigFormProps) {
@@ -116,7 +116,7 @@ export function StoryAdConfigForm({ onBack, onNext }: StoryAdConfigFormProps) {
       setNodes(defaultNodes);
       setEdges(defaultEdges);
       setIsStaticTemplate(true);
-      onNext(newConfigId); // Pass the newConfigId to the onNext callback
+      await onNext(newConfigId); // Await onNext to ensure backend call and navigation
     }
   };
 

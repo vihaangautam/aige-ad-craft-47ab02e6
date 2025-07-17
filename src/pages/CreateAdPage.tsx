@@ -8,6 +8,9 @@ import { StoryFlowBuilder } from "@/components/StoryFlowBuilder";
 import { FlowProvider } from "@/components/FlowContext";
 import StoryFlowBuilderWrapper from "@/components/StoryFlowBuilderWrapper";
 import CreateAdEntry from "./CreateAdEntry";
+import { useNavigate } from "react-router-dom";
+import { scriptAPI } from "@/lib/auth";
+import { useToast } from "@/hooks/use-toast";
 
 interface CreateAdPageProps {
   onNavigate: (path: string) => void;
@@ -51,6 +54,8 @@ export function CreateAdPage({ onNavigate }: CreateAdPageProps) {
   const [selectedAdType, setSelectedAdType] = useState<string | null>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null); // NEW: track template
   const [currentAdConfigId, setCurrentAdConfigId] = useState<string | null>(null); // Added state for adConfigId
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
   const handleAdTypeSelect = (typeId: string) => {
     setSelectedAdType(typeId);
@@ -82,11 +87,32 @@ export function CreateAdPage({ onNavigate }: CreateAdPageProps) {
   };
 
   // This function will be passed to StoryAdConfigForm's onNext
-  const handleConfigFormNext = (adConfigId?: string) => {
+  const handleConfigFormNext = async (adConfigId?: string) => {
     if (adConfigId) {
       setCurrentAdConfigId(adConfigId);
     }
-    setCurrentStep(currentStep + 1); // Move to next step (flow builder)
+    // Get config and flow from localStorage
+    const config = JSON.parse(localStorage.getItem('currentAdConfig') || '{}');
+    const flow = JSON.parse(localStorage.getItem('aige_current_flow') || 'null');
+    if (!flow) {
+      toast({
+        title: "Generation Failed",
+        description: "No flow data found. Please save your story flow before generating the script.",
+        variant: "destructive"
+      });
+      return;
+    }
+    // Immediately navigate to generating screen
+    navigate('/generating');
+    // Start backend script generation in the background
+    scriptAPI.generate(config, flow).catch((e) => {
+      console.error("Script generation failed", e);
+      toast({
+        title: "Script Generation Failed",
+        description: e?.response?.data?.error || e.message || "Unknown error",
+        variant: "destructive"
+      });
+    });
   };
 
   // This function is for general step advancement if not coming from config form

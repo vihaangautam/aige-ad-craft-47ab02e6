@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
 
@@ -43,6 +44,7 @@ const LinearStagePreview: React.FC = () => {
   const [videoError, setVideoError] = useState(false);
   const [debug, setDebug] = useState(false);
   const [videoEnded, setVideoEnded] = useState(false);
+  const navigate = useNavigate();
 
   const stage = stages[stageIndex];
 
@@ -93,14 +95,24 @@ const LinearStagePreview: React.FC = () => {
       {/* Header Bar */}
       <header className="bg-white text-black text-center py-2 px-4 shadow sticky top-0 z-10">
         <div className="flex items-center justify-between max-w-xs mx-auto">
-          <button
-            className="text-2xl px-2 disabled:opacity-30"
-            onClick={handleBack}
-            disabled={stageIndex === 0}
-            aria-label="Back"
-          >
-            ←
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              className="text-2xl px-2"
+              onClick={() => navigate('/')}
+              aria-label="Go to Home Page"
+              title="Go to Home Page"
+            >
+              🏠
+            </button>
+            <button
+              className="text-2xl px-2 disabled:opacity-30"
+              onClick={handleBack}
+              disabled={stageIndex === 0}
+              aria-label="Back"
+            >
+              ←
+            </button>
+          </div>
           <span className="flex-1 font-semibold text-base truncate">
             {stage.label}
           </span>
