@@ -209,7 +209,7 @@ export function StoryAdConfigForm({ onBack, onNext }: StoryAdConfigFormProps) {
         <Button 
           onClick={handleNext}
           className="bg-yellow-400 hover:bg-yellow-300 text-black font-semibold px-8"
-          disabled={isLoading}
+          disabled={isLoading} 
         >
           {isLoading ? (
             <>
