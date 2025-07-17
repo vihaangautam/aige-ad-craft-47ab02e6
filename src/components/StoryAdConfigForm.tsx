@@ -218,7 +218,7 @@ export function StoryAdConfigForm({ onBack, onNext }: StoryAdConfigFormProps) {
             </>
           ) : (
             <>
-              Next: Build Story Flow
+              Next: Start Generation
               <ArrowRight className="w-4 h-4 ml-2" />
             </>
           )}
