@@ -6,7 +6,7 @@ const templates = [
     key: "aige",
     title: "AIGE Template",
     description:
-      "Build a powerful AR-based, multi-node story using AI-generated scripts and scene logic. Ideal for immersive brand storytelling.",
+      "A seamless, scene-by-scene video journey that guides your audience through a single, compelling narrative.",
     icon: "🎥",
     route: "/create/aige",
   },
@@ -14,7 +14,7 @@ const templates = [
     key: "choice-point",
     title: "Choice Point Template",
     description:
-      "Let users interact with your ad through a story fork — choose a path, watch a consequence. Fast, lightweight, decision-based storytelling.",
+      "An interactive video experience where your audience shapes the story by making a pivotal choice.",
     icon: "🧠",
     route: "/create/choice-point",
   },

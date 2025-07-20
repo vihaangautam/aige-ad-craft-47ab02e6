@@ -2,11 +2,11 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Player from 'lottie-react';
 
-import TypingAnimation from '../../public/lottie/Typing.json';
-import SearchingAnimation from '../../public/lottie/Searching.json';
-import AIDataAnimation from '../../public/lottie/AI_data.json';
-import CookingAnimation from '../../public/lottie/Cooking.json';
-import CodingAnimation from '../../public/lottie/Coding.json';
+import TypingAnimation from '../lottie/Typing.json';
+import SearchingAnimation from '../lottie/Searching.json';
+import AIDataAnimation from '../lottie/AI_data.json';
+import CookingAnimation from '../lottie/Cooking.json';
+import CodingAnimation from '../lottie/Coding.json';
 
 const STAGES = [
   {

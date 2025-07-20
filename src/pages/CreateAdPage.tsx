@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Camera, Gamepad2, Image, ArrowRight, ArrowLeft } from "lucide-react";
+import { Sparkles, ArrowRight, ArrowLeft } from "lucide-react";
 import { StoryAdConfigForm } from "@/components/StoryAdConfigForm";
 import { StoryFlowBuilder } from "@/components/StoryFlowBuilder";
 import { FlowProvider } from "@/components/FlowContext";
@@ -23,27 +23,6 @@ const adTypes = [
     description: "Create interactive storytelling experiences with AR elements",
     icon: Sparkles,
     popular: true
-  },
-  {
-    id: "virtual-try-on",
-    title: "Virtual Try-On",
-    description: "Let customers try products virtually using AR technology",
-    icon: Camera,
-    popular: true
-  },
-  {
-    id: "game-ar",
-    title: "AR Story-Games",
-    description: "Engage users with interactive AR games and challenges",
-    icon: Gamepad2,
-    popular: false
-  },
-  {
-    id: "poster-ar",
-    title: "Poster AR",
-    description: "Transform static posters into interactive AR experiences",
-    icon: Image,
-    popular: false
   }
 ];
 
@@ -142,41 +121,44 @@ export function CreateAdPage({ onNavigate }: CreateAdPageProps) {
   );
 
   const renderStep1 = () => (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-yellow-200 mb-2">Choose Your Ad Type</h2>
-        <p className="text-gray-200">Select the type of AR experience you want to create</p>
+    <div className="space-y-8">
+      <div className="text-center space-y-4">
+        {/* Removed the icon above the heading */}
+        <h2 className="text-3xl font-bold bg-yellow-400  bg-clip-text text-transparent">
+          Get started with your immersive AR storytelling experience!
+        </h2>
+        <p className="text-gray-300 text-lg max-w-2xl mx-auto leading-relaxed">
+          Create interactive storytelling experiences with interactive elements that captivate your audience
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {adTypes.map((type) => (
+      <div className="flex justify-center">
+        <div className="w-full max-w-lg">
           <Card 
-            key={type.id}
-            className="cursor-pointer hover:shadow-lg hover:shadow-yellow-400/10 transition-all duration-300 border border-gray-200 hover:border-yellow-400"
-            onClick={() => handleAdTypeSelect(type.id)}
+            className="cursor-pointer group hover:shadow-2xl hover:shadow-yellow-400/20 transition-all duration-500 border border-gray-700 hover:border-yellow-400 bg-gradient-to-br from-gray-900 to-gray-800 overflow-hidden relative"
+            onClick={() => handleAdTypeSelect('immersive-story')}
           >
-            <CardContent className="p-6 text-center">
-              <div className="w-16 h-16 bg-yellow-400 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <type.icon className="w-8 h-8 text-black" />
+            {/* Animated background gradient */}
+            <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/5 to-amber-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <CardContent className="p-8 text-center relative z-10">
+              <div className="w-20 h-20 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <Sparkles className="w-10 h-10 text-black" />
               </div>
-              
-              <div className="flex items-center justify-center mb-2">
-                <h3 className="text-lg font-semibold text-black">{type.title}</h3>
-                {type.popular && (
-                  <Badge className="ml-2 bg-yellow-100 text-yellow-800 border-yellow-200">
-                    Popular
-                  </Badge>
-                )}
+              <div className="flex items-center justify-center mb-4">
+                <h3 className="text-2xl font-bold text-white">IMMERSIVE-STORY AIGE</h3>
+                <Badge className="ml-3 bg-gradient-to-r from-yellow-400 to-amber-500 text-black border-0 px-3 py-1 font-semibold shadow-md">
+                  Popular
+                </Badge>
               </div>
-              
-              <p className="text-gray-600 text-sm mb-4">{type.description}</p>
-              
-              <Button className="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-semibold">
-                Start <ArrowRight className="w-4 h-4 ml-2" />
+              <p className="text-gray-300 text-base mb-6 leading-relaxed">
+                Create interactive storytelling experiences with interactive elements that engage and delight your audience
+              </p>
+              <Button className="w-full bg-yellow-400 hover:bg-yellow-100 text-black font-bold text-lg py-4 rounded-xl shadow-lg transition-all duration-300 group-hover:scale-105 border-2 border-yellow-400">
+                Start Creating <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
               </Button>
             </CardContent>
           </Card>
-        ))}
+        </div>
       </div>
     </div>
   );
