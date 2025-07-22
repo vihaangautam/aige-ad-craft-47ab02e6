@@ -2,7 +2,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MoreVertical, Edit, Trash2 } from "lucide-react";
+import { Edit, Trash2 } from "lucide-react";
 
 interface ProjectCardProps {
   id: string;
@@ -16,45 +16,58 @@ interface ProjectCardProps {
   onDelete: (id: string) => void;
 }
 
+const typeEmoji: Record<string, string> = {
+  "Immersive Story AR": "🎬",
+  "Virtual Try-On": "🛍️",
+  "Game AR": "🎮",
+  "Poster AR": "🖼️",
+};
+
 const ProjectCard = ({ id, title, type, status, thumbnail, lastModified, views, onEdit, onDelete }: ProjectCardProps) => {
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "active": return "bg-aige-green/20 text-aige-green border-aige-green/40";
-      case "draft": return "bg-gray-500/20 text-gray-200 border-gray-400/40";
-      case "paused": return "bg-aige-orange/20 text-aige-orange border-aige-orange/40";
-      default: return "bg-gray-500/20 text-gray-200 border-gray-400/40";
+      case "active": return "bg-green-100 text-green-700 border-green-200";
+      case "draft": return "bg-gray-200 text-gray-700 border-gray-300";
+      case "paused": return "bg-yellow-100 text-yellow-700 border-yellow-200";
+      default: return "bg-gray-200 text-gray-700 border-gray-300";
     }
   };
 
   return (
-    <Card className="h-full">
+    <Card className="h-full bg-white rounded-2xl shadow-md hover:shadow-xl transition-all flex flex-col justify-between">
       <CardContent className="p-4 flex flex-col h-full">
-        <div className="aspect-video bg-aige-dark/60 rounded-lg mb-4 flex items-center justify-center border border-aige-yellow/10">
+        {/* Thumbnail + Emoji */}
+        <div className="relative aspect-video bg-gray-100 rounded-xl mb-4 flex items-center justify-center border border-gray-200 overflow-hidden">
           {thumbnail ? (
-            <img src={thumbnail} alt={title} className="w-full h-full object-cover rounded-lg" />
+            <img src={thumbnail} alt={title} className="w-full h-full object-cover rounded-xl" />
           ) : (
-            <div className="text-gray-500 text-sm">No preview</div>
+            <div className="flex flex-col items-center justify-center w-full h-full">
+              <span className="text-3xl mb-1">{typeEmoji[type] || "📁"}</span>
+              <span className="text-gray-400 text-xs">No preview</span>
+            </div>
           )}
+          {/* Project type emoji overlay */}
+          <span className="absolute top-2 left-2 text-2xl bg-white/80 rounded-full p-1 shadow">{typeEmoji[type] || "📁"}</span>
         </div>
-        <div className="space-y-3 flex-1">
+        <div className="space-y-2 flex-1">
           <div>
-            <h3 className="font-semibold text-white truncate">{title}</h3>
-            <p className="text-sm text-gray-400">{type}</p>
+            <h3 className="font-semibold text-lg text-black truncate">{title}</h3>
+            <p className="text-xs text-gray-500">{type}</p>
           </div>
-          <div className="flex items-center justify-between">
-            <Badge className={getStatusColor(status) + " border px-2 py-0.5 rounded-full text-xs font-semibold"}>
-              {status.charAt(0).toUpperCase() + status.slice(1)}
+          <div className="flex items-center justify-between mt-2">
+            <Badge className={getStatusColor(status) + " border px-2 py-0.5 rounded-full text-xs font-semibold capitalize"}>
+              {status}
             </Badge>
-            <span className="text-xs text-gray-400">{views} views</span>
+            <span className="text-xs text-gray-400">{views.toLocaleString()} views</span>
           </div>
-          <p className="text-xs text-gray-500">Modified {lastModified}</p>
+          <p className="text-xs text-gray-400 mt-1">Modified {lastModified}</p>
         </div>
-        <div className="flex justify-end gap-1 mt-auto">
-          <Button variant="ghost" size="sm" onClick={() => onEdit(id)}>
-            <Edit className="w-4 h-4 text-aige-yellow" />
+        <div className="flex justify-end gap-1 mt-4">
+          <Button variant="outline" size="icon" onClick={() => onEdit(id)} className="hover:bg-yellow-100">
+            <Edit className="w-4 h-4 text-yellow-500" />
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => onDelete(id)}>
-            <Trash2 className="w-4 h-4 text-red-400" />
+          <Button variant="outline" size="icon" onClick={() => onDelete(id)} className="hover:bg-red-100">
+            <Trash2 className="w-4 h-4 text-red-500" />
           </Button>
         </div>
       </CardContent>

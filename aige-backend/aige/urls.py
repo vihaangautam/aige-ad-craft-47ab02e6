@@ -17,7 +17,7 @@ urlpatterns = [
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path("api/generate-script/", ScriptGenerationView.as_view(), name="generate-script"),
-    path('ads/', include('ads.urls')),
+    path('api/', include('ads.urls')),  # <-- Make all ads endpoints available under /api/
 ]
 
 if settings.DEBUG:

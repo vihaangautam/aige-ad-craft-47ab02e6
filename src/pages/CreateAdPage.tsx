@@ -11,6 +11,8 @@ import CreateAdEntry from "./CreateAdEntry";
 import { useNavigate } from "react-router-dom";
 import { scriptAPI } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
+import { defaultNodes, defaultEdges } from '@/components/staticFlowTemplate';
+import { choicePointNodes, choicePointEdges } from '@/components/staticFlowTemplate2';
 
 interface CreateAdPageProps {
   onNavigate: (path: string) => void;
@@ -70,17 +72,26 @@ export function CreateAdPage({ onNavigate }: CreateAdPageProps) {
     if (adConfigId) {
       setCurrentAdConfigId(adConfigId);
     }
-    // Get config and flow from localStorage
+    // Determine which static flow to use
+    let flow;
+    if (selectedTemplate === 'choice-point') {
+      flow = { nodes: choicePointNodes, edges: choicePointEdges };
+    } else {
+      flow = { nodes: defaultNodes, edges: defaultEdges };
+    }
+    // Save to localStorage for preview/consistency
+    localStorage.setItem('aige_current_flow', JSON.stringify(flow));
     const config = JSON.parse(localStorage.getItem('currentAdConfig') || '{}');
-    const flow = JSON.parse(localStorage.getItem('aige_current_flow') || 'null');
-    if (!flow) {
+    // Defensive: check for valid config and flow
+    if (!config || Object.keys(config).length === 0 || !flow || !flow.nodes || flow.nodes.length === 0) {
       toast({
         title: "Generation Failed",
-        description: "No flow data found. Please save your story flow before generating the script.",
+        description: "Missing or invalid config or flow. Please check your setup.",
         variant: "destructive"
       });
       return;
     }
+    console.log('Generating script with config:', config, 'flow:', flow);
     // Immediately navigate to generating screen
     navigate('/generating');
     // Start backend script generation in the background

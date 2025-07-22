@@ -20,7 +20,7 @@ const menuItems = [
   },
   {
     title: "Create New Ad",
-    url: "/create",
+    url: "/create/aige",
     icon: Plus,
   },
   {

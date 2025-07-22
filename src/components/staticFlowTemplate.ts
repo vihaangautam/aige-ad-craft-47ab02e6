@@ -8,6 +8,7 @@ export const defaultNodes = [
       title: "Opening Scene",
       description: "User enters the virtual showroom",
       nodeType: "Scene",
+      scene_id: "opening_scene",
       optionA: {
         type: "upload",
         label: "Upload from Files",
@@ -50,9 +51,10 @@ export const defaultNodes = [
     position: { x: 870, y: 50 },
     data: {
       nodeNumber: 3,
-      title: "New Scene",
-      description: "Description for scene",
+      title: "Scene A",
+      description: "Description for scene A",
       nodeType: "Scene",
+      scene_id: "scene_a",
       optionA: {
         type: "upload",
         label: "Upload from Files",
@@ -80,9 +82,10 @@ export const defaultNodes = [
     position: { x: 900, y: 420 },
     data: {
       nodeNumber: 4,
-      title: "New Scene",
-      description: "Description for scene",
+      title: "Scene B",
+      description: "Description for scene B",
       nodeType: "Scene",
+      scene_id: "scene_b",
       optionA: {
         type: "upload",
         label: "Upload from Files",
@@ -165,6 +168,7 @@ export const choicePointNodes = [
       title: "Opening Scene",
       description: "User enters the virtual showroom",
       nodeType: "Scene",
+      scene_id: "opening_scene",
       optionA: {
         type: "upload",
         label: "Upload from Files",
@@ -207,9 +211,10 @@ export const choicePointNodes = [
     position: { x: 900, y: 100 },
     data: {
       nodeNumber: 3,
-      title: "New Scene",
-      description: "Description for scene",
+      title: "Scene A",
+      description: "Description for Scene A",
       nodeType: "Scene",
+      scene_id: "scene_a",
       optionA: {
         type: "upload",
         label: "Upload from Files",
@@ -237,9 +242,10 @@ export const choicePointNodes = [
     position: { x: 900, y: 400 },
     data: {
       nodeNumber: 4,
-      title: "New Scene",
-      description: "Description for scene",
+      title: "Scene B",
+      description: "Description for Scene B",
       nodeType: "Scene",
+      scene_id: "scene_b",
       optionA: {
         type: "upload",
         label: "Upload from Files",

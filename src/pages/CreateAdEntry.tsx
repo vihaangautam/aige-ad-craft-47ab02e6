@@ -42,7 +42,7 @@ const TemplateCard: FC<TemplateCardProps> = ({ icon, title, description, onClick
     <h2 className="text-2xl font-semibold mb-2 flex items-center gap-2">
       <span className="text-3xl">{icon}</span> {title}
     </h2>
-    <p className="text-sm text-gray-400">{description}</p>
+    <p className="text-base text-gray-400">{description}</p>
   </div>
 );
 

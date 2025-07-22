@@ -97,6 +97,12 @@ export const configsAPI = {
 export const scriptAPI = {
   generate: (config: any, flow: any) => 
     apiClient.post('/generate-script/', { config, flow }),
+  fetchLatest: () => apiClient.get('/get-latest-script/'),
+};
+
+export const videoAPI = {
+  generate: (prompt: string) =>
+    apiClient.post('/generate-video/', { prompt }),
 };
 
 // Utility to decode JWT and extract user id
