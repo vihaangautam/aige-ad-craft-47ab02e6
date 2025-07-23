@@ -144,6 +144,8 @@ const GeneratingScreenPage: React.FC = () => {
     if (!allOpsExist) return;
 
     const interval = setInterval(async () => {
+      let updated = false;
+      let videos = JSON.parse(localStorage.getItem('generatedVideos') || '{}');
       for (const key of ['opening', 'sceneA', 'sceneB'] as const) {
         const opId = operationIds[key];
         if (opId && videoStatus[key].status !== 'SUCCEEDED') {
@@ -154,11 +156,19 @@ const GeneratingScreenPage: React.FC = () => {
                 ...prev,
                 [key]: { status: 'SUCCEEDED', url: res.video_url }
               }));
+              // Save to localStorage immediately
+              if (key === 'opening') videos['opening_scene'] = res.video_url;
+              if (key === 'sceneA') videos['scene_a'] = res.video_url;
+              if (key === 'sceneB') videos['scene_b'] = res.video_url;
+              updated = true;
             }
           } catch (err) {
-            console.error(`❌ Error polling status for ${key}`, err);
+            console.error(`\u274c Error polling status for ${key}`, err);
           }
         }
+      }
+      if (updated) {
+        localStorage.setItem('generatedVideos', JSON.stringify(videos));
       }
     }, 20000);
 

@@ -15,22 +15,39 @@ export function PreviewPage() {
   // Fetch the latest script from backend and merge with video URLs from localStorage
   useEffect(() => {
     setLoading(true);
-    const videos = JSON.parse(localStorage.getItem('generatedVideos') || '{}');
-    setVideoUrls(videos);
-    apiClient.get('/get-latest-script/')
-      .then(res => {
+    // Log the generatedVideos key for debugging
+    console.log('generatedVideos in localStorage:', localStorage.getItem('generatedVideos'));
+    const fetchAndMerge = async () => {
+      const videos = JSON.parse(localStorage.getItem('generatedVideos') || '{}');
+      setVideoUrls(videos);
+      try {
+        const res = await apiClient.get('/get-latest-script/');
         let scriptArr = res.data.script || [];
-        // Merge video URLs from localStorage into script
-        scriptArr = scriptArr.map((scene: any) => {
+        // Always merge latest video URLs from localStorage
+        scriptArr = scriptArr.map((scene) => {
           if (scene.scene_id && videos[scene.scene_id]) {
             return { ...scene, videoUrl: videos[scene.scene_id] };
           }
-          return scene;
+          return { ...scene, videoUrl: null };
         });
         setScript(scriptArr);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+      } catch (e) {
+        setScript([]);
+      }
+      setLoading(false);
+    };
+    fetchAndMerge();
+    // Also listen for storage changes (e.g., if another tab updates videos)
+    const onStorage = () => {
+      const videos = JSON.parse(localStorage.getItem('generatedVideos') || '{}');
+      setVideoUrls(videos);
+      setScript((prevScript) => prevScript.map((scene) => ({
+        ...scene,
+        videoUrl: videos[scene.scene_id] || null,
+      })));
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
   }, []);
 
   // Parse scenes and choice point from script
