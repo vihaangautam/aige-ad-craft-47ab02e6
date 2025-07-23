@@ -137,7 +137,7 @@ class LatestScriptView(APIView):
         print('🟡 Returning script to frontend:', script)
         return Response({'script': script})
 
-class MockStatusView(APIView):
+class StatusView(APIView):
     permission_classes = [AllowAny]
     def post(self, request):
         operation_id = request.data.get("operation_id")
@@ -160,8 +160,9 @@ class GenerateVideoView(APIView):
         if not prompt:
             return Response({"error": "Missing prompt"}, status=status.HTTP_400_BAD_REQUEST)
         try:
+            # Call the REAL video generation endpoint (not /status)
             resp = requests.post(
-                "http://ai-aige.asiavilleservice.com/generate",
+                "http://ai-aige.asiavilleservice.com/generatev1",
                 json={"prompt": prompt},
                 headers={"Content-Type": "application/json"}
             )

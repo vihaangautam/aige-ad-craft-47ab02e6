@@ -59,7 +59,7 @@ Opening Scene → Choice Point (non-video) → Scene A or Scene B
 - Characters must feel natural, not exaggerated or stereotypical.
 - Dialogue must be prioritized, concise, spoken-style, and voiceover-friendly.
 - Visuals must be cinematic and formatted for strict 9:16 aspect ratio.
-- Emphasize immersive storytelling and brand presence.
+- Emphasize immersive storytelling and showcasing brand presence.
 
 --- FLOW JSON ---
 {flow_json}
@@ -72,10 +72,10 @@ Return a valid JSON array of **4 objects** in this order:
 4. Scene B
 
 For scenes (1, 3, 4), include:
-- `scene_id` or `scene_title`
-- `visual`: vivid, cinematic, 9:16 compatible, fits 8s
-- `dialogue`: brief, spoken-friendly line (prioritize dialogue)
-- `audio`: background or ambient music
+- `scene_id`
+- `visual`: Describe scene setting, character actions, and camera framing. Use cinematic language (e.g., 'Wide shot of...', 'Close-up of...', 'Over-the-shoulder'). Ensure 9:16 framing and <8s.
+- `dialogue`: 1-2 lines of spoken dialogue, natural and concise, voiceover-friendly.
+- `audio`: Mention mood-specific background music (e.g., chill, suspenseful) and ambient sounds (e.g., footsteps, app notifications, traffic).
 
 For the choice point (2), include:
 - `scene_id`: "choice_point"

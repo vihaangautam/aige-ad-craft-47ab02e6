@@ -2,11 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '@/lib/auth';
 
-// Mock video URLs for testing (replace these with your own links if desired)
-const MOCK_OPENING_URL = "https://do7ul3u01hm71.cloudfront.net/aige/2025/videos/24aad5d7-8070-4497-b67c-6ebd529751cd.mp4";
-const MOCK_SCENE_A_URL = "https://do7ul3u01hm71.cloudfront.net/aige/2025/videos/bcdb8533-9f8e-40fd-90d3-1a0221ffb853.mp4";
-const MOCK_SCENE_B_URL = "https://do7ul3u01hm71.cloudfront.net/aige/2025/videos/8bffbcce-8ca2-4c31-99d1-f9723b52fe54.mp4";
-
 export function PreviewPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -15,13 +10,24 @@ export function PreviewPage() {
   const [selectedScene, setSelectedScene] = useState<'scene_a' | 'scene_b' | null>(null);
   const [selectedOption, setSelectedOption] = useState<'scene_a' | 'scene_b' | null>(null);
   const [videoLoading, setVideoLoading] = useState(true);
+  const [videoUrls, setVideoUrls] = useState<{ [key: string]: string | null }>({});
 
-  // Fetch the latest script from backend
+  // Fetch the latest script from backend and merge with video URLs from localStorage
   useEffect(() => {
     setLoading(true);
+    const videos = JSON.parse(localStorage.getItem('generatedVideos') || '{}');
+    setVideoUrls(videos);
     apiClient.get('/get-latest-script/')
       .then(res => {
-        setScript(res.data.script || []);
+        let scriptArr = res.data.script || [];
+        // Merge video URLs from localStorage into script
+        scriptArr = scriptArr.map((scene: any) => {
+          if (scene.scene_id && videos[scene.scene_id]) {
+            return { ...scene, videoUrl: videos[scene.scene_id] };
+          }
+          return scene;
+        });
+        setScript(scriptArr);
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -32,11 +38,6 @@ export function PreviewPage() {
   const choicePoint = script.find((s) => s.scene_id === 'choice_point');
   const sceneA = script.find((s) => s.scene_id === 'scene_a');
   const sceneB = script.find((s) => s.scene_id === 'scene_b');
-
-  // Fallback video URLs for testing
-  const openingVideoSrc = openingScene?.videoUrl || MOCK_OPENING_URL;
-  const sceneAVideoSrc = sceneA?.videoUrl || MOCK_SCENE_A_URL;
-  const sceneBVideoSrc = sceneB?.videoUrl || MOCK_SCENE_B_URL;
 
   // Handle user choice
   const handleChoice = (choice: 'scene_a' | 'scene_b') => {
@@ -71,11 +72,11 @@ export function PreviewPage() {
       return (
         <div className="w-full flex flex-col items-center justify-center">
           <h2 className="text-lg font-semibold mb-2">Opening Scene</h2>
-          {openingVideoSrc ? (
+          {openingScene?.videoUrl ? (
             <div className={videoContainerClass}>
               {videoLoading && <div className="absolute inset-0 flex items-center justify-center bg-black/60 z-10 text-white">Loading video...</div>}
               <video
-                src={openingVideoSrc}
+                src={openingScene.videoUrl}
                 controls={false}
                 autoPlay
                 onEnded={() => setCurrentStage('choice')}
@@ -113,7 +114,7 @@ export function PreviewPage() {
       );
     }
     if (currentStage === 'scene' && selectedScene) {
-      const videoSrc = selectedScene === 'scene_a' ? sceneAVideoSrc : sceneBVideoSrc;
+      const videoSrc = selectedScene === 'scene_a' ? sceneA?.videoUrl : sceneB?.videoUrl;
       return (
         <div className="w-full flex flex-col items-center justify-center">
           <h2 className="text-lg font-semibold mb-2">
