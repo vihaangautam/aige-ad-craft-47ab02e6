@@ -37,7 +37,7 @@ const STAGES = [
   },
 ];
 
-const TOTAL_SECONDS = 240;
+const TOTAL_SECONDS = 180;
 const STAGE_SECONDS = TOTAL_SECONDS / STAGES.length;
 
 const MAX_RETRIES = 5;
@@ -60,11 +60,11 @@ const GeneratingScreenPage: React.FC = () => {
   const navigate = useNavigate();
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Delay the first fetch of /get-latest-script/ by 10 seconds after the component mounts
+  // Delay the first fetch of /get-latest-script/ by 12 seconds after the component mounts
   useEffect(() => {
     const timer = setTimeout(() => {
-      setRetryCount(1); // Start the retry logic after 10 seconds
-    }, 10000);
+      setRetryCount(1); // Start the retry logic after 12 seconds
+    }, 12000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -170,7 +170,7 @@ const GeneratingScreenPage: React.FC = () => {
       if (updated) {
         localStorage.setItem('generatedVideos', JSON.stringify(videos));
       }
-    }, 20000);
+    }, 15000);
 
     return () => clearInterval(interval);
   }, [operationIds, videoStatus]);

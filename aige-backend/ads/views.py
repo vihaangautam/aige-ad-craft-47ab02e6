@@ -162,7 +162,7 @@ class GenerateVideoView(APIView):
         try:
             # Call the REAL video generation endpoint (not /status)
             resp = requests.post(
-                "http://ai-aige.asiavilleservice.com/generatev1",
+                "http://ai-aige.asiavilleservice.com/status",
                 json={"prompt": prompt},
                 headers={"Content-Type": "application/json"}
             )
