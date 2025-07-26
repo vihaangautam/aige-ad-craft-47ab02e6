@@ -17,6 +17,10 @@ import { StoryAdConfigForm } from "@/components/StoryAdConfigForm";
 import StoryAdConfigForm2 from "@/components/StoryAdConfigForm2";
 import { StoryFlowBuilder as StoryFlowBuilder2 } from "@/components/StoryFlowBuilder2";
 import GeneratingScreenPage from './pages/GeneratingScreenPage';
+import { CreateMonoPage } from "@/pages/CreateMonoPage";
+import { LoadingMonoPage } from "@/pages/LoadingMonoPage";
+import { PreviewMonoPage } from "@/pages/PreviewMonoPage";
+import { PosterMonoPage } from "@/pages/PosterMonoPage";
 
 import {
   BrowserRouter as Router,
@@ -44,6 +48,12 @@ const App = () => {
 
               {/* Generating Screen Page */}
               <Route path="/generating" element={<GeneratingScreenPage />} />
+
+              {/* MONO Feature Routes */}
+              <Route path="/mono/create" element={<CreateMonoPage />} />
+              <Route path="/mono/loading" element={<LoadingMonoPage />} />
+              <Route path="/mono/preview" element={<PreviewMonoPage />} />
+              <Route path="/mono/poster" element={<PosterMonoPage />} />
 
               {/* Protected routes with Dashboard layout */}
               <Route
