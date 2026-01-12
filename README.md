@@ -42,23 +42,6 @@ AIGE AdCraft simplifies ad creation through a guided interface where users defin
 
 ---
 
-## Project Structure
-
-aige-ad-craft/
-├── frontend/
-│ ├── src/
-│ │ ├── components/
-│ │ ├── pages/
-│ │ ├── hooks/
-│ │ └── utils/
-│ └── public/
-├── backend/
-│ ├── ads/ # App with script & scene models
-│ ├── aige/ # Django project files
-│ ├── Dockerfile
-│ └── docker-compose.yml
-
-
 
 ## API Endpoints
 Method	Endpoint	              Description
